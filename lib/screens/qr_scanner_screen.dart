@@ -10,8 +10,31 @@ class QRScannerScreen extends StatefulWidget {
 }
 
 class _QRScannerScreenState extends State<QRScannerScreen> {
-  bool showScanner = false;
-  MobileScannerController scannerController = MobileScannerController();
+  bool showScanner = false; // Controls whether to show scanner
+  bool isScanning = false; // Prevents multiple scans
+  final MobileScannerController scannerController = MobileScannerController();
+
+  void _onQRScanned(BarcodeCapture barcodeCapture) {
+    if (isScanning) return; // Prevent multiple detections
+    setState(() => isScanning = true);
+
+    final String? code = barcodeCapture.barcodes.first.rawValue;
+    if (code != null) {
+      debugPrint("✅ QR Code Scanned: $code");
+      scannerController.stop(); // ✅ Stop scanning immediately
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => BLEUnlockScreen(code)),
+      );
+    } else {
+      debugPrint("❌ No valid QR code detected.");
+      setState(() {
+        isScanning = false; // Allow scanning again
+        showScanner = false; // Return to "Scan QR Code" button
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +44,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pop(context); // Go back to the home screen
+            Navigator.pop(context); // ✅ Go back to the home screen
           },
         ),
       ),
@@ -29,17 +52,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         child: showScanner
             ? MobileScanner(
                 controller: scannerController,
-                onDetect: (barcodeCapture) {
-                  final String? code = barcodeCapture.barcodes.first.rawValue;
-                  if (code != null) {
-                    debugPrint("✅ QR Code Scanned: $code");
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => BLEUnlockScreen(code)),
-                    );
-                  }
-                },
+                onDetect: _onQRScanned,
               )
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -53,6 +66,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                     onPressed: () {
                       setState(() {
                         showScanner = true;
+                        isScanning = false; // Reset scanning state
                       });
                     },
                     child: const Text("Scan QR Code"),

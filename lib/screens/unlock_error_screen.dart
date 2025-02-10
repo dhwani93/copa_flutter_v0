@@ -1,26 +1,38 @@
 import 'package:flutter/material.dart';
-import 'qr_scanner_screen.dart'; // Ensure this points to your main QR scanner screen
+import 'qr_scanner_screen.dart'; // Ensure this is your main home screen
 
 class UnlockErrorScreen extends StatelessWidget {
   final String errorMessage;
-
   const UnlockErrorScreen(this.errorMessage, {super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.red.shade700,
+      appBar: AppBar(
+        title: const Text("Unlock Failed"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const QRScannerScreen()),
+              (route) => false,
+            );
+          },
+        ),
+      ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 80, color: Colors.white),
+              const Icon(Icons.error,
+                  color: Color.fromARGB(255, 217, 160, 156), size: 80),
               const SizedBox(height: 20),
               Text(
                 errorMessage,
-                style: const TextStyle(fontSize: 22, color: Colors.white),
+                style: const TextStyle(fontSize: 18, color: Colors.black),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
@@ -34,13 +46,10 @@ class UnlockErrorScreen extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                ),
+                    backgroundColor: const Color.fromARGB(255, 123, 64, 60)),
                 child: const Text(
-                  "Back to Home",
-                  style: TextStyle(fontSize: 18, color: Colors.red),
+                  "Go Back to Home",
+                  style: TextStyle(fontSize: 16, color: Colors.white),
                 ),
               ),
             ],

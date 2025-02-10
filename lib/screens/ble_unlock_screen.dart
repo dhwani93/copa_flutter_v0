@@ -3,6 +3,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:convert';
 import 'unlock_success_screen.dart'; // Success screen
+import 'unlock_error_screen.dart'; // Error screen
 
 final String bleMacAddress = "AC:15:18:E9:C7:7E"; // ESP32 BLE MAC
 
@@ -19,6 +20,7 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
   String status = "Unlocking...";
   BluetoothDevice? targetDevice;
   BluetoothCharacteristic? unlockCharacteristic;
+  bool isConnecting = false; // Prevent multiple scans
 
   @override
   void initState() {
@@ -33,8 +35,10 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
   }
 
   void scanAndConnect() async {
-    await requestPermissions();
+    if (isConnecting) return; // Prevent multiple scans
+    isConnecting = true;
 
+    await requestPermissions();
     debugPrint("🔍 Scanning for ESP32 ($bleMacAddress)...");
 
     FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
@@ -46,14 +50,14 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
           targetDevice = result.device;
           FlutterBluePlus.stopScan();
           connectToDevice();
-          break;
+          return;
         }
       }
     });
 
     Future.delayed(const Duration(seconds: 10), () {
-      if (targetDevice == null) {
-        setState(() => status = "❌ ESP32 Not Found! Retry...");
+      if (mounted && targetDevice == null) {
+        _navigateToError("❌ ESP32 Not Found! Retry...");
       }
     });
   }
@@ -79,13 +83,11 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
             }
           }
         }
-
-        setState(() => status = "❌ Unlock characteristic not found!");
+        _navigateToError("❌ Unlock characteristic not found!");
       } catch (e) {
         debugPrint("❌ Attempt $attempt failed: $e");
         if (attempt == 3) {
-          setState(() => status = "❌ Connection Failed After 3 Attempts");
-          debugPrint("❌ Giving up after 3 attempts.");
+          _navigateToError("❌ Connection Failed After 3 Attempts");
         }
         await Future.delayed(const Duration(seconds: 2));
       }
@@ -94,6 +96,11 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
 
   void sendUnlockCommand() async {
     try {
+      if (unlockCharacteristic == null) {
+        _navigateToError("❌ Unlock characteristic missing!");
+        return;
+      }
+
       await unlockCharacteristic!.write(utf8.encode("unlock"));
       debugPrint("🚪 Unlock command sent successfully!");
 
@@ -103,20 +110,23 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
       }
 
       if (mounted) {
-        // Navigate to Success Screen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const UnlockSuccessScreen()),
         );
       }
-
-      // // Navigate back to the main screen
-      // if (mounted) {
-      //   Navigator.popUntil(context, (route) => route.isFirst);
-      // }
     } catch (e) {
-      setState(() => status = "❌ Unlock Failed! Try Again.");
       debugPrint("❌ Failed to send unlock command: $e");
+      _navigateToError("❌ Unlock Failed! Try Again.");
+    }
+  }
+
+  void _navigateToError(String message) {
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => UnlockErrorScreen(message)),
+      );
     }
   }
 
