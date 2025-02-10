@@ -41,12 +41,6 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("SmartPotty"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context); // ✅ Go back to the home screen
-          },
-        ),
       ),
       body: Center(
         child: showScanner
