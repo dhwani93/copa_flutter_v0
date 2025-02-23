@@ -1,6 +1,5 @@
 import 'package:copa_v0/main.dart';
 import 'package:flutter/material.dart';
-import 'qr_scanner_screen.dart';
 import '/widgets/app_bar_with_nav.dart';
 
 class UnlockSuccessScreen extends StatelessWidget {
