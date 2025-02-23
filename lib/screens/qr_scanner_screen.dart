@@ -42,28 +42,27 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           // QR Scanner View
           Expanded(
             child: Center(
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blueAccent.withOpacity(0.5),
-                      blurRadius: 15,
-                      spreadRadius: 3,
-                    ),
-                  ],
-                  border: Border.all(color: Colors.lightBlue, width: 4),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: MobileScanner(
-                  controller: scannerController,
-                  onDetect: _onQRScanned,
-                ),
+                child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blueAccent.withOpacity(0.5),
+                    blurRadius: 15,
+                    spreadRadius: 3,
+                  ),
+                ],
+                border: Border.all(color: Colors.lightBlue, width: 4),
+                borderRadius: BorderRadius.circular(25),
               ),
-            ),
+              child: MobileScanner(
+                controller: scannerController,
+                onDetect: _onQRScanned,
+              ),
+            )),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 2),
           // Unlock Button
           ElevatedButton(
             onPressed: scannedCode != null
