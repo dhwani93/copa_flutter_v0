@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 
 PreferredSizeWidget buildAppBar(BuildContext context) {
   return AppBar(
+    centerTitle: true,
     title: const Text(
-      "Copa",
+      "COPA",
       style: TextStyle(
         shadows: [
           Shadow(
             blurRadius: 3.0,
-            color: Colors.black26,
+            color: Color.fromARGB(66, 67, 62, 62),
             offset: Offset(1.5, 1.5),
           ),
         ],
