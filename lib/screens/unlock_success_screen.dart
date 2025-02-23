@@ -1,5 +1,7 @@
+import 'package:copa_v0/main.dart';
 import 'package:flutter/material.dart';
 import 'qr_scanner_screen.dart';
+import '/widgets/app_bar_with_nav.dart';
 
 class UnlockSuccessScreen extends StatelessWidget {
   const UnlockSuccessScreen({super.key});
@@ -7,51 +9,38 @@ class UnlockSuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 144, 189, 146),
-      appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 83, 124, 85),
-        automaticallyImplyLeading: false, // Remove default back button
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const QRScannerScreen()),
-                (route) => false,
-              );
-            },
-          ),
-        ],
-      ),
+      appBar: buildAppBar(context),
+      backgroundColor: Colors.grey[200],
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text(
-              "🚪 Door Unlocked Successfully!",
-              style: TextStyle(fontSize: 24, color: Colors.white),
+              "Door Unlocked!",
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
             const Text(
-              "Select the condition of the bathroom:",
-              style: TextStyle(fontSize: 18, color: Colors.white),
+              "How is the restroom?",
+              style: TextStyle(fontSize: 16, color: Colors.black87),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            // ⭐ Feedback buttons in the center
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 10,
-              runSpacing: 10,
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildFeedbackButton(context, "😃 Great"),
-                _buildFeedbackButton(context, "🙂 Good"),
-                _buildFeedbackButton(context, "😐 Okay"),
-                _buildFeedbackButton(context, "😕 Bad"),
-                _buildFeedbackButton(context, "🤢 Terrible"),
+                _buildFeedbackButton(context, "😃 Clean",
+                    const Color.fromARGB(255, 87, 166, 90)),
+                const SizedBox(height: 10),
+                _buildFeedbackButton(context, "🙂 Okay",
+                    const Color.fromARGB(255, 164, 131, 80)),
+                const SizedBox(height: 10),
+                _buildFeedbackButton(context, "😕 Needs Cleaning",
+                    const Color.fromARGB(255, 190, 103, 97)),
               ],
             ),
           ],
@@ -60,24 +49,23 @@ class UnlockSuccessScreen extends StatelessWidget {
     );
   }
 
-  // Helper function for feedback buttons
-  Widget _buildFeedbackButton(BuildContext context, String label) {
+  Widget _buildFeedbackButton(BuildContext context, String label, Color color) {
     return ElevatedButton(
       onPressed: () {
         // TODO: Send feedback to backend
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const QRScannerScreen()),
+          MaterialPageRoute(builder: (context) => const LandingPage()),
           (route) => false,
         );
       },
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
       child: Text(
         label,
-        style: const TextStyle(fontSize: 18, color: Colors.green),
+        style: TextStyle(fontSize: 18, color: color),
       ),
     );
   }
