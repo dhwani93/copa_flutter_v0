@@ -36,7 +36,7 @@ class LandingPage extends StatelessWidget {
           Center(
             child: CircleAvatar(
               radius: 60,
-              backgroundImage: AssetImage('assets/profile_placeholder.png'),
+              backgroundImage: AssetImage('assets/profile-placeholder.png'),
             ),
           ),
           SizedBox(height: 20),
@@ -66,7 +66,7 @@ class LandingPage extends StatelessWidget {
                     Marker(
                       markerId: MarkerId('poi'),
                       position: LatLng(37.7749, -122.4194),
-                      infoWindow: InfoWindow(title: 'Starbucks'),
+                      infoWindow: InfoWindow(title: 'Copa'),
                     ),
                   },
                 ),
@@ -93,7 +93,7 @@ class LandingPage extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'Nearby Location: Starbucks',
+                    'Nearby Location: Copa',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 5),
