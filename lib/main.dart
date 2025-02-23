@@ -15,6 +15,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.lightBlue,
+        scaffoldBackgroundColor:
+            Color.fromARGB(255, 203, 213, 212), // Super light grey background
         textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Poppins'),
       ),
       home: const LandingPage(),
@@ -28,7 +30,7 @@ class LandingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[200],
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -40,13 +42,13 @@ class LandingPage extends StatelessWidget {
             ),
           ),
           SizedBox(height: 20),
-          // Google Maps Card
+          // Rectangular Google Maps Card
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30.0),
             child: Container(
-              height: 200,
+              height: 180,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.grey.withOpacity(0.2),
@@ -56,7 +58,7 @@ class LandingPage extends StatelessWidget {
                 ],
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(10),
                 child: GoogleMap(
                   initialCameraPosition: CameraPosition(
                     target: LatLng(37.7749, -122.4194), // San Francisco Example
@@ -64,9 +66,19 @@ class LandingPage extends StatelessWidget {
                   ),
                   markers: {
                     Marker(
-                      markerId: MarkerId('poi'),
+                      markerId: MarkerId('copa_1'),
                       position: LatLng(37.7749, -122.4194),
-                      infoWindow: InfoWindow(title: 'Copa'),
+                      infoWindow: InfoWindow(title: 'Copa - 123 Main St'),
+                    ),
+                    Marker(
+                      markerId: MarkerId('copa_2'),
+                      position: LatLng(37.7790, -122.4194),
+                      infoWindow: InfoWindow(title: 'Copa - 456 Elm St'),
+                    ),
+                    Marker(
+                      markerId: MarkerId('copa_3'),
+                      position: LatLng(37.7800, -122.4200),
+                      infoWindow: InfoWindow(title: 'Copa - 789 Oak St'),
                     ),
                   },
                 ),
@@ -74,14 +86,14 @@ class LandingPage extends StatelessWidget {
             ),
           ),
           SizedBox(height: 20),
-          // Fake Google POI Data
+          // Show only the nearest Copa location
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30.0),
             child: Container(
               padding: EdgeInsets.all(15),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(15),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.grey.withOpacity(0.2),
@@ -93,7 +105,7 @@ class LandingPage extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'Nearby Location: Copa',
+                    'Nearest Location: Copa',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 5),
