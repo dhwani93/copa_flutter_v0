@@ -139,7 +139,7 @@ class LandingPage extends StatelessWidget {
                 elevation: 5, // Adds depth effect
               ),
               child: Text(
-                'Scan to Unlock',
+                'Scan QR Code',
                 style: TextStyle(
                     fontSize: 16,
                     color: Colors.white,
