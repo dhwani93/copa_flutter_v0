@@ -18,7 +18,7 @@ class BLEUnlockScreen extends StatefulWidget {
 }
 
 class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
-  String status = "Unlocking...";
+  String status = "Almost there!";
   BluetoothDevice? targetDevice;
   BluetoothCharacteristic? unlockCharacteristic;
   bool isConnecting = false;
@@ -134,19 +134,27 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
       appBar: buildAppBar(context),
       backgroundColor: Colors.grey[200],
       body: Center(
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          const CircularProgressIndicator(
-            strokeWidth: 6,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            status,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-        ]),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 25),
+            SizedBox(
+              width: 80,
+              height: 80,
+              child: const CircularProgressIndicator(
+                strokeWidth: 6,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+              ),
+            ),
+            const SizedBox(height: 25),
+            Text(
+              status,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 25),
+          ],
+        ),
       ),
     );
   }
