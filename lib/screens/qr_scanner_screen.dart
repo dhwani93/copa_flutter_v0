@@ -54,12 +54,14 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                       color: scannedCode != null
                           ? const Color.fromARGB(255, 234, 238, 234)
                               .withOpacity(0.2)
-                          : Colors.blueAccent.withOpacity(0.1),
+                          : const Color.fromARGB(255, 195, 205, 222)
+                              .withOpacity(0.1),
                       blurRadius: 15,
                       spreadRadius: 3,
                     ),
                   ],
-                  border: Border.all(color: Colors.lightBlue, width: 4),
+                  border: Border.all(
+                      color: const Color.fromARGB(255, 99, 163, 193), width: 4),
                   borderRadius: BorderRadius.circular(25),
                 ),
                 child: scannedCode != null

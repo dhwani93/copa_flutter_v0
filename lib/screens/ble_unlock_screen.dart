@@ -4,6 +4,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:convert';
 import 'unlock_success_screen.dart'; // Success screen
 import 'unlock_error_screen.dart'; // Error screen
+import '/widgets/app_bar_with_nav.dart';
 
 final String bleMacAddress = "AC:15:18:E9:C7:7E"; // ESP32 BLE MAC
 
@@ -20,7 +21,7 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
   String status = "Unlocking...";
   BluetoothDevice? targetDevice;
   BluetoothCharacteristic? unlockCharacteristic;
-  bool isConnecting = false; // Prevent multiple scans
+  bool isConnecting = false;
 
   @override
   void initState() {
@@ -35,14 +36,13 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
   }
 
   void scanAndConnect() async {
-    if (isConnecting) return; // Prevent multiple scans
+    if (isConnecting) return;
     isConnecting = true;
 
     await requestPermissions();
     debugPrint("🔍 Scanning for ESP32 ($bleMacAddress)...");
 
     FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
-
     FlutterBluePlus.scanResults.listen((results) {
       for (ScanResult result in results) {
         if (result.device.remoteId.toString().toUpperCase() == bleMacAddress) {
@@ -100,16 +100,14 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
         _navigateToError("❌ Unlock characteristic missing!");
         return;
       }
-
       await unlockCharacteristic!.write(utf8.encode("unlock"));
       debugPrint("🚪 Unlock command sent successfully!");
-
       if (targetDevice != null) {
         await targetDevice!.disconnect();
         debugPrint("🔌 Disconnected from ESP32!");
       }
-
       if (mounted) {
+        await Future.delayed(const Duration(seconds: 2));
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const UnlockSuccessScreen()),
@@ -133,22 +131,28 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Unlock Porta Potty"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context); // Go back to the home screen
-          },
-        ),
-      ),
+      appBar: buildAppBar(context),
+      backgroundColor: Colors.grey[200],
       body: Center(
-        child: Text(
-          status,
-          style: const TextStyle(fontSize: 18),
-          textAlign: TextAlign.center,
-        ),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          const CircularProgressIndicator(
+            strokeWidth: 6,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            status,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+        ]),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }
