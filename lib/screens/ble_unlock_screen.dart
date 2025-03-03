@@ -6,6 +6,7 @@ import 'unlock_success_screen.dart'; // Success screen
 import 'unlock_error_screen.dart'; // Error screen
 import 'qr_scanner_screen.dart'; // QR Scanner screen
 import '/widgets/app_bar_with_nav.dart';
+import '/widgets/occupancy_error_dialog.dart'; // Import the new OccupancyErrorDialog widget
 
 final String bleMacAddress = "AC:15:18:E9:C7:7E"; // ESP32 BLE MAC
 
@@ -38,56 +39,15 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
     }
   }
 
-  void showErrorDialog(String message) {
+  void showErrorDialog() {
     setState(() {
       status = "Error: COPA is currently in use.";
     });
     showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.8,
-                height: MediaQuery.of(context).size.height * 0.66,
-                padding: EdgeInsets.symmetric(vertical: 30, horizontal: 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.warning,
-                        color: const Color.fromARGB(255, 214, 186, 61),
-                        size: 25),
-                    SizedBox(height: 20),
-                    Text("Attention",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    SizedBox(height: 40),
-                    Text(message, textAlign: TextAlign.center),
-                    SizedBox(height: 100),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                      ),
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => QRScannerScreen()),
-                        );
-                      },
-                      child: Text("OK",
-                          style: TextStyle(color: Colors.white, fontSize: 18)),
-                    ),
-                  ],
-                ),
-              ),
-            ));
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => OccupancyErrorDialog(),
+    );
   }
 
   Future<void> requestPermissions() async {
@@ -146,9 +106,8 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
         status = message;
       });
       if (message.contains("currently in use")) {
-        showErrorDialog(
-            "Someone is inside, please try in sometime.\n There is another COPA 3 minutes from here.");
-      } else if (message.contains("Success: Unlock command received")) {
+        showErrorDialog();
+      } else if (message.contains("Success")) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const UnlockSuccessScreen()),
@@ -179,7 +138,7 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
             }
           }
         }
-        showErrorDialog("❌ Unlock characteristic not found!");
+        navigateToError("❌ Unlock characteristic not found!");
       } catch (e) {
         debugPrint("❌ Attempt $attempt failed: $e");
         if (attempt == 3) {
