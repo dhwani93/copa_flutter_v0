@@ -39,10 +39,6 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
   }
 
   void showErrorDialog(String message) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => QRScannerScreen()),
-    );
     setState(() {
       status = "Error: COPA is currently in use.";
     });
@@ -78,7 +74,13 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
                         padding:
                             EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                       ),
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => QRScannerScreen()),
+                        );
+                      },
                       child: Text("OK",
                           style: TextStyle(color: Colors.white, fontSize: 18)),
                     ),
@@ -156,7 +158,7 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
   }
 
   Future<void> connectToDevice() async {
-    for (int attempt = 1; attempt <= 2; attempt++) {
+    for (int attempt = 1; attempt <= 3; attempt++) {
       try {
         debugPrint("🔗 Attempt $attempt to connect to ESP32...");
         await targetDevice!.connect();
@@ -180,8 +182,8 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
         showErrorDialog("❌ Unlock characteristic not found!");
       } catch (e) {
         debugPrint("❌ Attempt $attempt failed: $e");
-        if (attempt == 2) {
-          navigateToError("❌ Connection Failed After 2 Attempts");
+        if (attempt == 3) {
+          navigateToError("❌ Connection Failed After 3 Attempts");
         }
         await Future.delayed(const Duration(seconds: 2));
       }
