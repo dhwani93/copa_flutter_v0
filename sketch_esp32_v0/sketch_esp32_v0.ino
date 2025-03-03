@@ -44,6 +44,24 @@ void connectToWiFi() {
     Serial.println(WiFi.status() == WL_CONNECTED ? F("✅ WiFi Connected!") : F("❌ WiFi Connection Failed!"));
 }
 
+// ✅ Initialize NTP Time Sync
+void setupTime() {
+    Serial.println(F("⏳ Setting up NTP Time Sync..."));
+    configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+    struct tm timeinfo;
+    if (!getLocalTime(&timeinfo)) {
+        Serial.println(F("❌ Failed to sync time! Retrying..."));
+        delay(2000);
+        if (!getLocalTime(&timeinfo)) {
+            Serial.println(F("🚫 Time sync failed twice! Check WiFi."));
+            return;
+        }
+    }
+    Serial.println(F("✅ Time Synced Successfully!"));
+    Serial.print(F("🕒 UTC Time: "));
+    Serial.println(asctime(&timeinfo));
+}
+
 // ✅ Get UTC Milliseconds
 uint64_t getCurrentUTCMillis() {
     struct timeval tv;
@@ -59,6 +77,7 @@ class MyServerCallbacks : public BLEServerCallbacks {
 
 // ✅ Send Unlock Command
 void sendUnlock() {
+    Serial.println(F("📡 Sending Unlock Request to TTLock API..."));
     if (WiFi.status() != WL_CONNECTED) return;
     WiFiClient client;
     HTTPClient http;
@@ -66,7 +85,12 @@ void sendUnlock() {
     http.addHeader("Content-Type", "application/x-www-form-urlencoded");
     char postData[200];
     sprintf(postData, "clientId=%s&accessToken=%s&lockId=%s&date=%llu", CID, ATOKEN, LID, getCurrentUTCMillis());
-    http.POST(postData);
+    Serial.print(F("🔍 POST Data: "));
+    Serial.println(postData);
+    int httpResponseCode = http.POST(postData);
+    Serial.print(F("✅ HTTP Response Code: "));
+    Serial.println(httpResponseCode);
+    Serial.println(F("📡 Unlock request completed."));
     http.end();
 }
 
@@ -74,12 +98,22 @@ void sendUnlock() {
 class UnlockCallback : public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic *pCharacteristic) override {
         std::string value = std::string(pCharacteristic->getValue().c_str());
+        int occupancyState = digitalRead(REED_OCCUPANCY_SWITCH_PIN_INPUT);
+
         if (value == "unlock") {
-            digitalWrite(LOCK_LED_PIN, HIGH);
-            unlockStartTime = millis();
-            isUnlocking = true;
-            sendUnlock();
+            if (occupancyState == HIGH) {
+                pCharacteristic->setValue("Error: COPA is currently in use.");
+            } else {
+                digitalWrite(LOCK_LED_PIN, HIGH);
+                unlockStartTime = millis();
+                isUnlocking = true;
+                sendUnlock();
+                pCharacteristic->setValue("Success: Unlock command received");
+            }
+        } else {
+            pCharacteristic->setValue("Error: Invalid command");
         }
+        pCharacteristic->notify();
     }
 };
 
@@ -90,12 +124,13 @@ void setup() {
     pinMode(REED_OCCUPANCY_LED_PIN, OUTPUT);
     pinMode(REED_OCCUPANCY_SWITCH_PIN_INPUT, INPUT_PULLUP);
     connectToWiFi();
+    setupTime();
     BLEDevice::init(DEVICE_NAME);
     pServer = BLEDevice::createServer();
     pServer->setCallbacks(new MyServerCallbacks());
     BLEService *pService = pServer->createService(SERVICE_UUID);
     pCharacteristic = pService->createCharacteristic(
-        CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE);
+        CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE | BLECharacteristic::PROPERTY_NOTIFY);
     pCharacteristic->setCallbacks(new UnlockCallback());
     pService->start();
     pAdvertising = pServer->getAdvertising();
