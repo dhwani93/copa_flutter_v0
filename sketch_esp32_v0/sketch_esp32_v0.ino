@@ -22,8 +22,8 @@
 #define TTLOCK_API_URL "http://euapi.ttlock.com/v3/lock/unlock"
 
 // ✅ Flask Server API Endpoint
-const char* SERVER_URL = "https://flask-server-gf424afzja-uc.a.run.app/event";
-const char* COPA_ID = "copa_sta_100";
+const char* SERVER_URL = "http://34.8.253.98:80/event"; // COPA backend server
+const char* COPA_ID = "copa_sta_1";
 
 // ✅ TTLock API Credentials
 const char CID[] PROGMEM = "7485f19f1da341c8bff11a5f913457a2";
