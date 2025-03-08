@@ -21,6 +21,10 @@
 #define WIFI_PASSWORD "LebronJames"
 #define TTLOCK_API_URL "http://euapi.ttlock.com/v3/lock/unlock"
 
+// ✅ Flask Server API Endpoint
+const char* SERVER_URL = "https://flask-server-gf424afzja-uc.a.run.app/event";
+const char* COPA_ID = "copa_sta_100";
+
 // ✅ TTLock API Credentials
 const char CID[] PROGMEM = "7485f19f1da341c8bff11a5f913457a2";
 const char ATOKEN[] PROGMEM = "c94900daa6a63589ff7a91bbe9146e7b";
@@ -34,6 +38,9 @@ bool deviceConnected = false;
 unsigned long unlockStartTime = 0;
 bool isUnlocking = false;
 
+// ✅ Occupancy State Tracking
+int previousOccupancyState = LOW;  // Initially set to LOW
+
 // ✅ WiFi Connection Function
 void connectToWiFi() {
     Serial.println(F("🌐 Connecting to WiFi..."));
@@ -42,6 +49,35 @@ void connectToWiFi() {
         delay(500);
     }
     Serial.println(WiFi.status() == WL_CONNECTED ? F("✅ WiFi Connected!") : F("❌ WiFi Connection Failed!"));
+}
+
+// ✅ Send HTTP POST Request to Flask Server
+void sendEventToServer(String eventType) {
+    if (WiFi.status() == WL_CONNECTED) {
+        HTTPClient http;
+        http.begin(SERVER_URL);
+        http.addHeader("Content-Type", "application/json");
+
+        // Create JSON payload
+        String requestBody = "{\"copa_id\": \"" + String(COPA_ID) + "\", \"event\": \"" + eventType + "\"}";
+
+        Serial.print("📡 Sending event to server: ");
+        Serial.println(requestBody);
+
+        int httpResponseCode = http.POST(requestBody);
+
+        if (httpResponseCode > 0) {
+            Serial.print("✅ Server Response: ");
+            Serial.println(httpResponseCode);
+        } else {
+            Serial.print("❌ Error sending event: ");
+            Serial.println(http.errorToString(httpResponseCode));
+        }
+
+        http.end();
+    } else {
+        Serial.println("❌ Not connected to Wi-Fi, cannot send event.");
+    }
 }
 
 // ✅ Initialize NTP Time Sync
@@ -143,7 +179,19 @@ void loop() {
         digitalWrite(LOCK_LED_PIN, LOW);
         isUnlocking = false;
     }
-    int occupancyState = digitalRead(REED_OCCUPANCY_SWITCH_PIN_INPUT);
-    digitalWrite(REED_OCCUPANCY_LED_PIN, occupancyState == LOW ? LOW : HIGH);
+    int currentOccupancyState = digitalRead(REED_OCCUPANCY_SWITCH_PIN_INPUT);
+    digitalWrite(REED_OCCUPANCY_LED_PIN, currentOccupancyState == LOW ? LOW : HIGH);
+
+    if (currentOccupancyState != previousOccupancyState) {
+        Serial.print("🔄 Occupancy State Changed: ");
+        Serial.println(currentOccupancyState == HIGH ? "HIGH (Occupied)" : "LOW (Unoccupied)");
+
+        // Send event to Flask server
+        sendEventToServer(currentOccupancyState == HIGH ? "occupancy_on" : "occupancy_off");
+
+        // Update previous state
+        previousOccupancyState = currentOccupancyState;
+    }
+
     delay(100);
 }
