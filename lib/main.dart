@@ -2,8 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'screens/qr_scanner_screen.dart';
 import 'widgets/app_bar_with_nav.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
-void main() {
+Future<void> requestNotificationPermissions() async {
+  FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+  // For iOS - Request permissions explicitly
+  NotificationSettings settings = await messaging.requestPermission(
+    alert: true,
+    announcement: false,
+    badge: true,
+    carPlay: false,
+    criticalAlert: false,
+    provisional: false,
+    sound: true,
+  );
+
+  if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+    print('✅ Push Notifications: Permission granted!');
+  } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+    print('⚠️ Push Notifications: Provisional permission granted.');
+  } else {
+    print('❌ Push Notifications: Permission denied.');
+  }
+}
+
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  await requestNotificationPermissions();  // Ask for push notification permissions
   runApp(const MyApp());
 }
 

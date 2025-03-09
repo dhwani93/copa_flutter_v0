@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1046189272026",
+    "project_id": "copav0-945d8",
+    "storage_bucket": "copav0-945d8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1046189272026:android:6fc2bab7c32769b2d0eee3",
+        "android_client_info": {
+          "package_name": "com.example.copa_v0"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLdsg4C20hUSpvPIXy4yZz6NZwe1v8-KU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

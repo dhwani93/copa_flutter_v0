@@ -7,8 +7,35 @@ import 'unlock_error_screen.dart'; // Error screen
 import 'qr_scanner_screen.dart'; // QR Scanner screen
 import '/widgets/app_bar_with_nav.dart';
 import '/widgets/occupancy_error_dialog.dart'; // Import the new OccupancyErrorDialog widget
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 final String bleMacAddress = "AC:15:18:E9:C7:7E"; // ESP32 BLE MAC
+final String copa_id = "copa_sta_1"; //This should come from QR code scan , as a response of authentication request.
+
+
+Future<void> sendFCMTokenToServer(String copaId) async {
+  String? fcmToken = await FirebaseMessaging.instance.getToken();
+
+  if (fcmToken != null) {
+    final String url = "http://34.8.253.98:80/unlocked"; // Your Flask API
+
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"copa_id": copaId, "fcm_token": fcmToken}),
+    );
+
+    if (response.statusCode == 200) {
+      print("✅ FCM Token Sent After Unlock!");
+    } else {
+      print("❌ Failed to Send FCM Token: ${response.body}");
+    }
+  } else {
+    print("❌ Could not retrieve FCM token.");
+  }
+}
 
 class BLEUnlockScreen extends StatefulWidget {
   final String qrData;
@@ -108,6 +135,10 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
       if (message.contains("currently in use")) {
         showErrorDialog();
       } else if (message.contains("Success")) {
+        
+        // Send FCM token when unlock is successful
+        sendFCMTokenToServer(copa_id);  
+        
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const UnlockSuccessScreen()),
