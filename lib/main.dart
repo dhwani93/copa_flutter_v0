@@ -5,6 +5,7 @@ import 'widgets/app_bar_with_nav.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'dart:typed_data'; // Required for vibration pattern
 
 Future<void> requestNotificationPermissions() async {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
@@ -29,13 +30,59 @@ Future<void> requestNotificationPermissions() async {
   }
 }
 
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+Future<void> setupLocalNotifications() async {
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  final InitializationSettings initializationSettings =
+      InitializationSettings(android: initializationSettingsAndroid);
+
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+}
+
+Future<void> showNotification(RemoteMessage message) async {
+  final Int64List vibrationPattern = Int64List.fromList([0, 500, 200, 500]); // ✅ Move outside
+
+  final AndroidNotificationDetails androidPlatformChannelSpecifics =
+      AndroidNotificationDetails(
+    'high_importance_channel',
+    'High Importance Notifications',
+    importance: Importance.max,
+    priority: Priority.high,
+    playSound: true,
+    enableVibration: true,
+    vibrationPattern: vibrationPattern, // ✅ Use pre-defined variable
+  );
+
+  final NotificationDetails platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+
+  await flutterLocalNotificationsPlugin.show(
+    0,
+    message.notification?.title ?? 'Notification',
+    message.notification?.body ?? 'You received a new message',
+    platformChannelSpecifics,
+  );
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  await requestNotificationPermissions();  // Ask for push notification permissions
+  await requestNotificationPermissions();
+  await setupLocalNotifications(); // ✅ Initialize notifications
+
+  // ✅ Listen for foreground notifications
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    print("📩 Foreground Notification Received: ${message.notification?.title}");
+    showNotification(message); // ✅ Show notification when app is open
+  });
+
   runApp(const MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
