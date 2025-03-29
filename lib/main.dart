@@ -3,86 +3,40 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'screens/qr_scanner_screen.dart';
 import 'widgets/app_bar_with_nav.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'dart:typed_data'; // Required for vibration pattern
-
-Future<void> requestNotificationPermissions() async {
-  FirebaseMessaging messaging = FirebaseMessaging.instance;
-
-  // For iOS - Request permissions explicitly
-  NotificationSettings settings = await messaging.requestPermission(
-    alert: true,
-    announcement: false,
-    badge: true,
-    carPlay: false,
-    criticalAlert: false,
-    provisional: false,
-    sound: true,
-  );
-
-  if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-    print('✅ Push Notifications: Permission granted!');
-  } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
-    print('⚠️ Push Notifications: Provisional permission granted.');
-  } else {
-    print('❌ Push Notifications: Permission denied.');
-  }
-}
-
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
-
-Future<void> setupLocalNotifications() async {
-  const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
-
-  final InitializationSettings initializationSettings =
-      InitializationSettings(android: initializationSettingsAndroid);
-
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-}
-
-Future<void> showNotification(RemoteMessage message) async {
-  final Int64List vibrationPattern = Int64List.fromList([0, 500, 200, 500]); // ✅ Move outside
-
-  final AndroidNotificationDetails androidPlatformChannelSpecifics =
-      AndroidNotificationDetails(
-    'high_importance_channel',
-    'High Importance Notifications',
-    importance: Importance.max,
-    priority: Priority.high,
-    playSound: true,
-    enableVibration: true,
-    vibrationPattern: vibrationPattern, // ✅ Use pre-defined variable
-  );
-
-  final NotificationDetails platformChannelSpecifics =
-      NotificationDetails(android: androidPlatformChannelSpecifics);
-
-  await flutterLocalNotificationsPlugin.show(
-    0,
-    message.notification?.title ?? 'Notification',
-    message.notification?.body ?? 'You received a new message',
-    platformChannelSpecifics,
-  );
-}
+import 'screens/notification_handler.dart'; // ✅ Import notification logic
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  await requestNotificationPermissions();
-  await setupLocalNotifications(); // ✅ Initialize notifications
+  await NotificationHandler.requestPermissions();
+  await NotificationHandler
+      .setupLocalNotifications(); // ✅ Initialize notifications
 
   // ✅ Listen for foreground notifications
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print("📩 Foreground Notification Received: ${message.notification?.title}");
-    showNotification(message); // ✅ Show notification when app is open
+    print(
+        "📩 Foreground Notification Received: ${message.notification?.title}");
+    NotificationHandler.showNotification(
+        message); // ✅ Show notification when app is open
+  });
+
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    print('🔁 App resumed from notification tap.');
+    NotificationHandler.showNotificationModal(
+      message.notification?.body ?? 'You tapped a notification.',
+    );
+  });
+
+  FirebaseMessaging.instance.getInitialMessage().then((message) {
+    if (message != null) {
+      NotificationHandler.showNotificationModal(
+          message.notification?.body ?? 'Notification tapped');
+    }
   });
 
   runApp(const MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -98,6 +52,7 @@ class MyApp extends StatelessWidget {
         textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Poppins'),
       ),
       home: const LandingPage(),
+      navigatorKey: NotificationHandler.navigatorKey, // ✅ Set the navigator key
     );
   }
 }
