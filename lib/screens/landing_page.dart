@@ -3,6 +3,7 @@ import 'package:copa_v0/widgets/scan_to_unlock_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/app_bar_with_nav.dart';
 import '../widgets/map_widgets.dart';
 import 'qr_scanner_screen.dart';
@@ -224,7 +225,31 @@ class _LandingPageState extends State<LandingPage> {
                         icon: const Icon(Icons.navigation,
                             size: 16, color: Colors.white),
                         label: const Text('Directions'),
-                        onPressed: () {},
+                        onPressed: () async {
+                          final lat = location["position"].latitude;
+                          final lng = location["position"].longitude;
+                          final url = Uri.parse(
+                              'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=walking');
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text(
+                                    'Opening directions in Google Maps...')),
+                          );
+
+                          await Future.delayed(
+                              const Duration(milliseconds: 500));
+                          if (await canLaunchUrl(url)) {
+                            await launchUrl(url,
+                                mode: LaunchMode.externalApplication);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content:
+                                      Text("Could not launch Google Maps")),
+                            );
+                          }
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue[600],
                           foregroundColor: Colors.white,
