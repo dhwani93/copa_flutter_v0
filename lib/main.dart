@@ -1,28 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'screens/qr_scanner_screen.dart';
-import 'widgets/app_bar_with_nav.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'screens/notification_handler.dart'; // ✅ Import notification logic
+import 'screens/notification_handler.dart';
+import 'screens/landing_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await NotificationHandler.requestPermissions();
-  await NotificationHandler
-      .setupLocalNotifications(); // ✅ Initialize notifications
+  await NotificationHandler.setupLocalNotifications();
 
-  // ✅ Listen for foreground notifications
   FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-    print(
-        "📩 Foreground Notification Received: ${message.notification?.title}");
-    NotificationHandler.showNotification(
-        message); // ✅ Show notification when app is open
+    NotificationHandler.showNotification(message);
   });
 
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-    print('🔁 App resumed from notification tap.');
     NotificationHandler.showNotificationModal(
       message.notification?.body ?? 'You tapped a notification.',
     );
@@ -45,142 +37,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.lightBlue,
-        scaffoldBackgroundColor:
-            Colors.grey[200], // Super light grey background
-        textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Poppins'),
-      ),
+      theme: ThemeData.dark(),
       home: const LandingPage(),
-      navigatorKey: NotificationHandler.navigatorKey, // ✅ Set the navigator key
-    );
-  }
-}
-
-class LandingPage extends StatelessWidget {
-  const LandingPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: buildAppBar(context),
-      backgroundColor: Colors.grey[200],
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(height: 20),
-          // Rectangular Google Maps Card with Lighter Theme
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30.0),
-            child: Container(
-              height: 300,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 12,
-                    spreadRadius: 4,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: LatLng(37.7749, -122.4194), // San Francisco Example
-                    zoom: 14,
-                  ),
-                  markers: {
-                    Marker(
-                      markerId: MarkerId('nearest_copa'),
-                      position: LatLng(37.7749, -122.4194),
-                      infoWindow: InfoWindow(title: 'Copa - 123 Main St'),
-                    ),
-                    Marker(
-                      markerId: MarkerId('copa_2'),
-                      position: LatLng(37.7790, -122.4174),
-                      infoWindow: InfoWindow(title: 'Copa - Market St'),
-                    ),
-                    Marker(
-                      markerId: MarkerId('copa_3'),
-                      position: LatLng(37.7765, -122.4216),
-                      infoWindow: InfoWindow(title: 'Copa - Powell St'),
-                    ),
-                  },
-                  mapType: MapType.normal,
-                ),
-              ),
-            ),
-          ),
-          SizedBox(height: 20),
-          // Nearest Location Card with Border
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30.0),
-            child: Container(
-              padding: EdgeInsets.all(10),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey[300]!, width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.2),
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'Nearest Copa Location',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 5),
-                  Text(
-                    '123 Main St, San Francisco, CA',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(height: 30),
-          // QR Code Button with Hover Effect
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const QRScannerScreen()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.lightBlue,
-                padding: EdgeInsets.symmetric(
-                    horizontal: 50, vertical: 18), // Slightly larger button
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                elevation: 5, // Adds depth effect
-              ),
-              child: Text(
-                'Scan QR Code',
-                style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ],
-      ),
+      navigatorKey: NotificationHandler.navigatorKey,
     );
   }
 }

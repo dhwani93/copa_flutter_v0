@@ -43,6 +43,7 @@ dependencies:
   firebase_core: ^3.12.1
   firebase_messaging: ^15.2.4
   flutter_local_notifications: ^18.0.1
+  lottie: ^2.7.0
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +68,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/profile-placeholder.png
+    - assets/map_style_dark.json
+    - assets/rahul_profile.jpeg
+    - assets/animations/ble_unlocking.json
+    - assets/animations/ble_error.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:

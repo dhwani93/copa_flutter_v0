@@ -15,7 +15,8 @@ PreferredSizeWidget buildAppBar(BuildContext context) {
         ],
       ),
     ),
-    backgroundColor: Color.fromARGB(255, 173, 216, 230),
+    backgroundColor: Colors.black.withOpacity(0.5),
+    elevation: 0,
     actions: [
       GestureDetector(
         onTap: () {
@@ -67,7 +68,7 @@ PreferredSizeWidget buildAppBar(BuildContext context) {
           ),
           child: CircleAvatar(
             radius: 20,
-            backgroundImage: AssetImage('assets/profile-placeholder.png'),
+            backgroundImage: AssetImage('assets/rahul_profile.jpeg'),
           ),
         ),
       ),
