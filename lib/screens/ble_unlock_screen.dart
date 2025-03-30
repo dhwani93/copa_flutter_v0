@@ -67,11 +67,7 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
     setState(() {
       status = "Error: COPA is currently in use.";
     });
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => OccupancyErrorDialog(),
-    );
+    OccupancyErrorDialog.show(context);
   }
 
   Future<void> requestPermissions() async {
