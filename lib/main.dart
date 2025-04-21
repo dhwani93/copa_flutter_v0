@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'screens/notification_handler.dart';
 import 'screens/landing_page.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,8 +37,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'COPA',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
+      theme: AppTheme.darkTheme,
       home: const LandingPage(),
       navigatorKey: NotificationHandler.navigatorKey,
     );

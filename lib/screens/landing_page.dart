@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../widgets/app_bar_with_nav.dart';
 import '../widgets/map_widgets.dart';
 import 'qr_scanner_screen.dart';
+import '../theme/app_colors.dart';
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -24,16 +25,22 @@ class _LandingPageState extends State<LandingPage> {
       "position": const LatLng(37.7749, -122.4194),
       "address": "123 Main St, San Francisco, CA",
       "distance": "0.3 mi",
+      "status": "vacant",
+      "lastCleaned": "12 min ago"
     },
     "Market St": {
       "position": const LatLng(37.7790, -122.4174),
       "address": "456 Market St, San Francisco, CA",
       "distance": "0.7 mi",
+      "status": "occupied",
+      "lastCleaned": "1 hr ago"
     },
     "Powell St": {
       "position": const LatLng(37.7765, -122.4216),
       "address": "789 Powell St, San Francisco, CA",
       "distance": "1.2 mi",
+      "status": "vacant",
+      "lastCleaned": "25 min ago"
     },
   };
 
@@ -75,7 +82,9 @@ class _LandingPageState extends State<LandingPage> {
               return Marker(
                 markerId: MarkerId(entry.key),
                 position: entry.value["position"],
-                infoWindow: InfoWindow(title: "Copa - ${entry.key}"),
+                icon: BitmapDescriptor.defaultMarkerWithHue(
+                    BitmapDescriptor.hueOrange),
+                anchor: Offset(0.5, 1.0), // centers it at the bottom of glow
                 onTap: () => _selectLocation(entry.key),
               );
             }).toSet(),
@@ -85,25 +94,21 @@ class _LandingPageState extends State<LandingPage> {
             mapToolbarEnabled: false,
             padding: const EdgeInsets.only(bottom: 120),
           ),
-
-          // Gradient overlay
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.5),
+                  Theme.of(context).colorScheme.background.withOpacity(0.5),
                   Colors.transparent,
                   Colors.transparent,
-                  Colors.black.withOpacity(0.7),
+                  Theme.of(context).colorScheme.background.withOpacity(0.7),
                 ],
                 stops: const [0.0, 0.2, 0.7, 1.0],
               ),
             ),
           ),
-
-          // Zoom controls
           Positioned(
             top: MediaQuery.of(context).size.height * 0.35,
             right: 16,
@@ -119,18 +124,13 @@ class _LandingPageState extends State<LandingPage> {
               ],
             ),
           ),
-
           const ScanToUnlockBanner(),
-
-          // Search Bar
           Positioned(
-            bottom: 230,
+            bottom: 270, // moved search bar slightly up
             left: 16,
             right: 16,
             child: buildSearchBar(),
           ),
-
-          // Location Card
           Positioned(
             bottom: 30,
             left: 16,
@@ -149,7 +149,7 @@ class _LandingPageState extends State<LandingPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.background.withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -186,7 +186,7 @@ class _LandingPageState extends State<LandingPage> {
                     Text(
                       location["distance"],
                       style: TextStyle(
-                        color: Colors.grey[500],
+                        color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -194,9 +194,9 @@ class _LandingPageState extends State<LandingPage> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'COPA ${_selectedLocation}',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  'COPA $_selectedLocation',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
                   ),
@@ -204,15 +204,39 @@ class _LandingPageState extends State<LandingPage> {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.location_on, size: 12, color: Colors.grey[500]),
+                    Icon(Icons.location_on,
+                        size: 12, color: AppColors.textSecondary),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         location["address"],
                         style: TextStyle(
-                          color: Colors.grey[500],
+                          color: AppColors.textSecondary,
                           fontSize: 14,
                         ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Icon(Icons.circle,
+                        size: 10,
+                        color: location["status"] == "occupied"
+                            ? AppColors.errorRed
+                            : AppColors.successGreen),
+                    const SizedBox(width: 6),
+                    Text(
+                      location["status"] == "occupied" ? "Occupied" : "Vacant",
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                    const Spacer(),
+                    Text(
+                      'Last cleaned: ${location["lastCleaned"]}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textMuted,
                       ),
                     ),
                   ],
@@ -222,8 +246,9 @@ class _LandingPageState extends State<LandingPage> {
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        icon: const Icon(Icons.navigation,
-                            size: 16, color: Colors.white),
+                        icon: Icon(Icons.navigation,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.onPrimary),
                         label: const Text('Directions'),
                         onPressed: () async {
                           final lat = location["position"].latitude;
@@ -251,8 +276,10 @@ class _LandingPageState extends State<LandingPage> {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue[600],
-                          foregroundColor: Colors.white,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          foregroundColor:
+                              Theme.of(context).colorScheme.onPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -263,13 +290,20 @@ class _LandingPageState extends State<LandingPage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: OutlinedButton.icon(
-                        icon: const Icon(Icons.info_outline,
-                            size: 16, color: Colors.white70),
+                        icon: Icon(Icons.info_outline,
+                            size: 16,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimary
+                                .withOpacity(0.7)),
                         label: const Text('Details'),
                         onPressed: () {},
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                          side: BorderSide(color: Colors.grey[700]!),
+                          foregroundColor: Theme.of(context)
+                              .colorScheme
+                              .onPrimary
+                              .withOpacity(0.7),
+                          side: BorderSide(color: AppColors.divider),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),

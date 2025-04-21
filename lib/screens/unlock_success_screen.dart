@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '/widgets/app_bar_with_nav.dart';
+import '../theme/app_colors.dart';
 import 'landing_page.dart';
 
 class UnlockSuccessScreen extends StatelessWidget {
@@ -15,35 +16,42 @@ class UnlockSuccessScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.lock_open, color: Colors.greenAccent, size: 60),
+            const Icon(Icons.lock_open,
+                color: AppColors.successGreen, size: 60),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               "Door Unlocked!",
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               "How is the restroom?",
-              style: TextStyle(fontSize: 16, color: Colors.white70),
+              style: TextStyle(
+                  fontSize: 16,
+                  color:
+                      Theme.of(context).colorScheme.onPrimary.withOpacity(0.7)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 30),
             Column(
-              children: const [
+              children: [
                 FeedbackButton(
-                    label: "Clean", emoji: "😃", color: Colors.greenAccent),
+                    label: "Clean", emoji: "😃", color: AppColors.successGreen),
                 SizedBox(height: 12),
-                FeedbackButton(label: "Okay", emoji: "🙂", color: Colors.amber),
+                FeedbackButton(
+                    label: "Okay",
+                    emoji: "🙂",
+                    color: Theme.of(context).colorScheme.secondary),
                 SizedBox(height: 12),
                 FeedbackButton(
                     label: "Needs Cleaning",
                     emoji: "😕",
-                    color: Colors.redAccent),
+                    color: AppColors.errorRed),
               ],
             ),
           ],
@@ -109,7 +117,7 @@ class _FeedbackButtonState extends State<FeedbackButton>
           width: 220,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           decoration: BoxDecoration(
-            color: Colors.white10,
+            color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(40),
             border:
                 Border.all(color: widget.color.withOpacity(0.6), width: 1.2),

@@ -45,6 +45,8 @@ dependencies:
   flutter_local_notifications: ^18.0.1
   lottie: ^2.7.0
   url_launcher: ^6.2.4
+  flutter_native_splash: ^2.3.2
+  flutter_launcher_icons: ^0.13.1
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +75,9 @@ flutter:
     - assets/rahul_profile.jpeg
     - assets/animations/ble_unlocking.json
     - assets/animations/ble_error.json
+    - assets/animations/door_open.json
+    - assets/flash_native.png
+    - assets/app_icon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
@@ -104,3 +109,16 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_native_splash:
+  color: "#101014"
+  image: assets/flash_native.png
+  android_12:
+    color: "#101014"
+    image: assets/flash_native.png
+
+flutter_launcher_icons:
+  android: true
+  image_path: assets/app_icon.png
+  adaptive_icon_background: "#101014"
+  adaptive_icon_foreground: assets/app_icon.png

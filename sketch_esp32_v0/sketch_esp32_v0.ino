@@ -17,8 +17,8 @@
 #define REED_DOOR_LED_PIN 27
 #define REED_OCCUPANCY_LED_PIN 16
 #define REED_OCCUPANCY_SWITCH_PIN_INPUT 17
-#define WIFI_SSID "New Variant"
-#define WIFI_PASSWORD "LebronJames"
+#define WIFI_SSID "WhipSaw-Guest"
+#define WIFI_PASSWORD "whipsaw!"
 #define TTLOCK_API_URL "http://euapi.ttlock.com/v3/lock/unlock"
 
 // ✅ Flask Server API Endpoint
