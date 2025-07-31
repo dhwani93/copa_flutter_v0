@@ -45,7 +45,8 @@ class BLEUnlockScreen extends StatefulWidget {
 class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
   String status = "Almost there!";
   BluetoothDevice? targetDevice;
-  BluetoothCharacteristic? unlockCharacteristic;
+  BluetoothCharacteristic? rxCharacteristic; // for sending commands
+  BluetoothCharacteristic? txCharacteristic; // for receiving responses
   bool isConnecting = false;
 
   @override
@@ -84,8 +85,12 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
     FlutterBluePlus.startScan(timeout: const Duration(seconds: 10));
     FlutterBluePlus.scanResults.listen((results) {
       for (ScanResult result in results) {
-        if (result.device.remoteId.toString().toUpperCase() == bleMacAddress) {
-          debugPrint("✅ Found ESP32! Connecting...");
+        final localName = result.advertisementData.advName ?? "";
+        debugPrint(
+            "🔍 Found device: ${result.device.remoteId}, Name: $localName");
+
+        if (localName.toLowerCase().contains("copa")) {
+          debugPrint("✅ Found COPA device! Connecting...");
           targetDevice = result.device;
           FlutterBluePlus.stopScan();
           connectToDevice();
@@ -102,11 +107,11 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
 
   void sendUnlockCommand() async {
     try {
-      if (unlockCharacteristic == null) {
+      if (rxCharacteristic == null) {
         navigateToError("❌ Unlock characteristic missing!");
         return;
       }
-      await unlockCharacteristic!.write(utf8.encode("unlock"));
+      await rxCharacteristic!.write(utf8.encode("unlock"));
       debugPrint("🚪 Unlock command sent successfully!");
     } catch (e) {
       debugPrint("❌ Failed to send unlock command: \$e");
@@ -114,24 +119,32 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
     }
   }
 
-  void listenForResponses() async {
-    if (unlockCharacteristic == null) return;
-    unlockCharacteristic!.setNotifyValue(true);
-    unlockCharacteristic!.value.listen((response) {
-      String message = String.fromCharCodes(response);
-      setState(() {
-        status = message;
+  void listenForResponses(BluetoothCharacteristic txChar) async {
+    try {
+      await txChar.setNotifyValue(true);
+      txChar.value.listen((response) {
+        String message = String.fromCharCodes(response);
+        debugPrint("📩 Received: $message");
+
+        setState(() {
+          status = message;
+        });
+
+        if (message.contains("currently in use")) {
+          showErrorDialog();
+        } else if (message.contains("Success")) {
+          sendFCMTokenToServer(copa_id);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const UnlockSuccessScreen()),
+          );
+        }
       });
-      if (message.contains("currently in use")) {
-        showErrorDialog();
-      } else if (message.contains("Success")) {
-        sendFCMTokenToServer(copa_id);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const UnlockSuccessScreen()),
-        );
-      }
-    });
+    } catch (e) {
+      debugPrint("❌ Failed to listen for responses: $e");
+      navigateToError("❌ Could not subscribe to notifications");
+    }
   }
 
   Future<void> connectToDevice() async {
@@ -146,17 +159,25 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
         for (BluetoothService service in services) {
           for (BluetoothCharacteristic characteristic
               in service.characteristics) {
-            if (characteristic.uuid.toString() ==
-                "abcd5678-1234-5678-1234-abcdef987654") {
-              unlockCharacteristic = characteristic;
-              debugPrint("🔑 Unlock characteristic found!");
-              listenForResponses();
-              sendUnlockCommand();
-              return;
+            final uuid = characteristic.uuid.toString().toUpperCase();
+
+            if (uuid == "6E400002-B5A3-F393-E0A9-E50E24DCCA9E") {
+              rxCharacteristic = characteristic; // For sending commands
+              debugPrint("✍️ RX characteristic found (write)");
+            } else if (uuid == "6E400003-B5A3-F393-E0A9-E50E24DCCA9E") {
+              txCharacteristic = characteristic; // For receiving responses
+              debugPrint("📣 TX characteristic found (notify)");
             }
           }
         }
-        navigateToError("❌ Unlock characteristic not found!");
+
+        if (rxCharacteristic != null && txCharacteristic != null) {
+          listenForResponses(txCharacteristic!);
+          sendUnlockCommand();
+          return;
+        } else {
+          navigateToError("❌ Required BLE characteristics not found!");
+        }
       } catch (e) {
         debugPrint("❌ Attempt \$attempt failed: \$e");
         if (attempt == 3) {
