@@ -10,12 +10,10 @@ class AppTheme {
       colorScheme: const ColorScheme.dark(
         primary: AppColors.accentOrange,
         secondary: AppColors.primaryBlue,
-        background: AppColors.background,
         surface: AppColors.surface,
         error: AppColors.errorRed,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
-        onBackground: Colors.white,
         onSurface: Colors.white,
         onError: Colors.white,
       ),

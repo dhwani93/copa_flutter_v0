@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../utils/color_extensions.dart';
 import 'package:flutter/services.dart';
 import '../screens/qr_scanner_screen.dart';
 
@@ -26,11 +27,11 @@ class ScanToUnlockBanner extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 16),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.8),
+            color: Colors.blue.withOpacitySafe(0.8),
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withOpacitySafe(0.3),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),

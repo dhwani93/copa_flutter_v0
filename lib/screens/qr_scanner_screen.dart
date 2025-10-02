@@ -1,7 +1,6 @@
-import 'dart:async';
-import 'dart:ui';
 import 'package:copa_v0/widgets/copa_fact_banner.dart';
 import 'package:flutter/material.dart';
+import '../utils/color_extensions.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -100,7 +99,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
                       height: 240,
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: Colors.blueAccent.withOpacity(0.4),
+                          color: Colors.blueAccent.withOpacitySafe(0.4),
                           width: 3,
                         ),
                         borderRadius: BorderRadius.circular(20),
@@ -134,9 +133,9 @@ class _QRScannerScreenState extends State<QRScannerScreen>
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    Colors.blueAccent.withOpacity(0.2),
-                                    Colors.blueAccent.withOpacity(0.6),
-                                    Colors.blueAccent.withOpacity(0.2),
+                                    Colors.blueAccent.withOpacitySafe(0.2),
+                                    Colors.blueAccent.withOpacitySafe(0.6),
+                                    Colors.blueAccent.withOpacitySafe(0.2),
                                   ],
                                 ),
                               ),

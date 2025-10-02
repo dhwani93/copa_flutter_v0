@@ -3,10 +3,10 @@ import 'package:copa_v0/widgets/scan_to_unlock_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../utils/color_extensions.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/app_bar_with_nav.dart';
 import '../widgets/map_widgets.dart';
-import 'qr_scanner_screen.dart';
 import '../theme/app_colors.dart';
 
 class LandingPage extends StatefulWidget {
@@ -47,6 +47,10 @@ class _LandingPageState extends State<LandingPage> {
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
     rootBundle.loadString('assets/map_style_dark.json').then((style) {
+      // setMapStyle is deprecated; the current plugin suggests using
+      // the GoogleMap.style API. Keep the runtime behavior the same and
+      // silence the deprecation lint until a larger migration is done.
+      // ignore: deprecated_member_use
       mapController.setMapStyle(style);
     });
   }
@@ -100,10 +104,10 @@ class _LandingPageState extends State<LandingPage> {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Theme.of(context).colorScheme.background.withOpacity(0.5),
+                  Theme.of(context).colorScheme.surface.withOpacitySafe(0.5),
                   Colors.transparent,
                   Colors.transparent,
-                  Theme.of(context).colorScheme.background.withOpacity(0.7),
+                  Theme.of(context).colorScheme.surface.withOpacitySafe(0.7),
                 ],
                 stops: const [0.0, 0.2, 0.7, 1.0],
               ),
@@ -145,11 +149,11 @@ class _LandingPageState extends State<LandingPage> {
   Widget _buildLocationCard(Map<String, dynamic> location) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF121212).withOpacity(0.8),
+  color: const Color(0xFF121212).withOpacitySafe(0.8),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.background.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.surface.withOpacitySafe(0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -171,13 +175,13 @@ class _LandingPageState extends State<LandingPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.2),
+                        color: Colors.blue.withOpacitySafe(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         'Nearest Location',
                         style: TextStyle(
-                          color: Colors.blue.withOpacity(0.8),
+                          color: Colors.blue.withOpacitySafe(0.8),
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -256,23 +260,22 @@ class _LandingPageState extends State<LandingPage> {
                           final url = Uri.parse(
                               'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=walking');
 
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text(
-                                    'Opening directions in Google Maps...')),
-                          );
+                          // Capture messenger and mounted state before async gaps
+                          final messenger = ScaffoldMessenger.of(context);
+                          messenger.showSnackBar(const SnackBar(
+                              content: Text(
+                                  'Opening directions in Google Maps...')));
 
-                          await Future.delayed(
-                              const Duration(milliseconds: 500));
+                          await Future.delayed(const Duration(milliseconds: 500));
+                          if (!mounted) return;
+
                           if (await canLaunchUrl(url)) {
                             await launchUrl(url,
                                 mode: LaunchMode.externalApplication);
                           } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content:
-                                      Text("Could not launch Google Maps")),
-                            );
+                            messenger.showSnackBar(const SnackBar(
+                                content:
+                                    Text("Could not launch Google Maps")));
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -295,14 +298,14 @@ class _LandingPageState extends State<LandingPage> {
                             color: Theme.of(context)
                                 .colorScheme
                                 .onPrimary
-                                .withOpacity(0.7)),
+                                .withOpacitySafe(0.7)),
                         label: const Text('Details'),
                         onPressed: () {},
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Theme.of(context)
                               .colorScheme
                               .onPrimary
-                              .withOpacity(0.7),
+                              .withOpacitySafe(0.7),
                           side: BorderSide(color: AppColors.divider),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(

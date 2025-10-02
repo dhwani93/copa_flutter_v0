@@ -119,9 +119,11 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
   Future<void> _kickoff() async {
     await _requestPermissions();
 
-    final isOn = await FlutterBluePlus.isOn;
-    debugPrint("🔵 isOn: $isOn");
-    if (!isOn) return _fail("Please turn ON Bluetooth to continue.");
+  // Use adapterState.first to check adapter status (replacement for deprecated isOn)
+  final adapterState = await FlutterBluePlus.adapterState.first;
+  final isOn = adapterState == BluetoothAdapterState.on;
+  debugPrint("🔵 isOn: $isOn");
+  if (!isOn) return _fail("Please turn ON Bluetooth to continue.");
 
     // Some OEMs still want Location Services ON for scans (we don't hard-fail if off)
     final locSvc = await Permission.location.serviceStatus.isEnabled;
@@ -153,7 +155,7 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
 
     _scanSub = FlutterBluePlus.scanResults.listen((batch) async {
       for (final r in batch) {
-        final name = r.advertisementData.advName ?? "";
+        final name = r.advertisementData.advName;
         debugPrint("• ${r.device.remoteId}  name:$name  rssi:${r.rssi}");
 
         // Match by name "copa" (simple & robust for now)
@@ -250,10 +252,11 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
     _sawAnyTx = false;
 
     // 1) Subscribe to TX
-    try {
+      try {
       await _tx!.setNotifyValue(true);
       _txSub?.cancel();
-      _txSub = _tx!.value.listen(_onTxData, onError: (e) {
+      // Use lastValueStream (replacement for deprecated .value getter)
+      _txSub = _tx!.lastValueStream.listen(_onTxData, onError: (e) {
         _fail("Notify error: $e");
       });
       debugPrint("📣 TX notify enabled");

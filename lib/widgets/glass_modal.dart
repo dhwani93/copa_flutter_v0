@@ -1,6 +1,7 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../utils/color_extensions.dart';
 
 class GlassModal extends StatelessWidget {
   final IconData icon;
@@ -65,8 +66,8 @@ class GlassModal extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              decoration: BoxDecoration(
+              color: Colors.white.withOpacitySafe(0.1),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.white10),
             ),

@@ -1,17 +1,18 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../utils/color_extensions.dart';
 
 Widget buildMapControlButton(IconData icon, VoidCallback onPressed) {
   return Container(
     width: 36,
     height: 36,
     decoration: BoxDecoration(
-      color: Colors.grey[900]!.withOpacity(0.7),
+  color: Colors.grey[900]!.withOpacitySafe(0.7),
       shape: BoxShape.circle,
       border: Border.all(color: Colors.grey[800]!),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.2),
+          color: Colors.black.withOpacitySafe(0.2),
           blurRadius: 5,
           offset: Offset(0, 2),
         ),

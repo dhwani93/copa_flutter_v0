@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/color_extensions.dart';
 import 'package:flutter/services.dart';
 import '/widgets/app_bar_with_nav.dart';
 import '../theme/app_colors.dart';
@@ -34,7 +35,7 @@ class UnlockSuccessScreen extends StatelessWidget {
               style: TextStyle(
                   fontSize: 16,
                   color:
-                      Theme.of(context).colorScheme.onPrimary.withOpacity(0.7)),
+                      Theme.of(context).colorScheme.onPrimary.withOpacitySafe(0.7)),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 30),
@@ -83,8 +84,8 @@ class _FeedbackButtonState extends State<FeedbackButton>
 
   void _onTap() {
     HapticFeedback.mediumImpact();
-
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
       SnackBar(
         content: const Text("Thanks for your feedback!"),
         duration: const Duration(milliseconds: 1200),
@@ -92,6 +93,7 @@ class _FeedbackButtonState extends State<FeedbackButton>
     );
 
     Future.delayed(const Duration(milliseconds: 1200), () {
+      if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const LandingPage()),
@@ -117,10 +119,10 @@ class _FeedbackButtonState extends State<FeedbackButton>
           width: 220,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.onPrimary.withOpacitySafe(0.1),
             borderRadius: BorderRadius.circular(40),
-            border:
-                Border.all(color: widget.color.withOpacity(0.6), width: 1.2),
+      border:
+        Border.all(color: widget.color.withOpacitySafe(0.6), width: 1.2),
           ),
           child: Column(
             children: [

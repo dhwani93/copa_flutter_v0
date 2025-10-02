@@ -24,12 +24,12 @@ class NotificationHandler {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('✅ Push Notifications: Permission granted!');
+      debugPrint('✅ Push Notifications: Permission granted!');
     } else if (settings.authorizationStatus ==
         AuthorizationStatus.provisional) {
-      print('⚠️ Push Notifications: Provisional permission granted.');
+      debugPrint('⚠️ Push Notifications: Provisional permission granted.');
     } else {
-      print('❌ Push Notifications: Permission denied.');
+      debugPrint('❌ Push Notifications: Permission denied.');
     }
   }
 

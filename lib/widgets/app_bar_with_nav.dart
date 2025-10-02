@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/color_extensions.dart';
 
 PreferredSizeWidget buildAppBar(BuildContext context) {
   return AppBar(
@@ -15,7 +16,7 @@ PreferredSizeWidget buildAppBar(BuildContext context) {
         ],
       ),
     ),
-    backgroundColor: Colors.black.withOpacity(0.5),
+  backgroundColor: Colors.black.withOpacitySafe(0.5),
     elevation: 0,
     actions: [
       GestureDetector(

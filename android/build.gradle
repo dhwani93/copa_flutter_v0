@@ -4,7 +4,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.3.0' // Gradle plugin version
+    classpath 'com.android.tools.build:gradle:8.6.0' // Gradle plugin version
         // Ensure this line is present for firebase used to get notifications
         classpath 'com.google.gms:google-services:4.4.2' 
     }
