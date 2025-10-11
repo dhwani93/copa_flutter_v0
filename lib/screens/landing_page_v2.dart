@@ -1,11 +1,10 @@
-import 'dart:ui';
-import 'package:copa_v0/widgets/scan_to_unlock_banner.dart';
+import 'dart:ui' as ui;
+import 'package:copa_v0/widgets/scan_to_unlock_banner_v2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import '../utils/color_extensions.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../utils/color_extensions.dart';
 import '../widgets/app_bar_with_nav.dart';
 import '../widgets/map_widgets.dart';
 import '../theme/app_colors.dart';
@@ -51,84 +50,109 @@ class _LandingPageV2State extends State<LandingPageV2> {
     },
   };
 
-  // Overlay state for the Figma landing frame
-  bool _showFigmaOverlay = false;
-  Offset _overlayOffset = Offset.zero;
   final Map<String, BitmapDescriptor?> _markerIcons = {};
+  bool _markersLoaded = false;
+  Set<Marker> _markers = {};
+  Set<Circle> _markerBackgroundCircles = {};
+  bool _showLocationCardV2 = false;
 
   @override
   void initState() {
     super.initState();
-    // pre-load PNG pin assets (copied earlier into assets/figma/pins/png)
     _loadMarkerIcons();
   }
 
   Future<void> _loadMarkerIcons() async {
     final entries = _locationData.keys.toList();
     final choices = [127, 131, 135, 170, 171, 172, 173, 174, 175];
+
     for (var i = 0; i < entries.length; i++) {
       final key = entries[i];
-      // prefer the resized 48px variants we generated
-  final pngName = 'assets/figma/pins/resized/pin_174_${choices[i % choices.length]}_32w.png';
+      final pngName = 'assets/figma/pins/resized/pin_174_${choices[i % choices.length]}_48w.png';
       try {
-        final descriptor = await BitmapDescriptor.fromAssetImage(
-            const ImageConfiguration(size: Size(48, 48)), pngName);
+        // Load PNG and scale it up to 120px for better visibility
+        final data = await rootBundle.load(pngName);
+        final bytes = data.buffer.asUint8List();
+        
+        final codec = await ui.instantiateImageCodec(
+          bytes,
+          targetWidth: 120,
+          targetHeight: 120,
+        );
+        final frame = await codec.getNextFrame();
+        final scaledImage = frame.image;
+        
+        final byteData = await scaledImage.toByteData(format: ui.ImageByteFormat.png);
+        final scaledBytes = byteData!.buffer.asUint8List();
+        
+        final descriptor = BitmapDescriptor.fromBytes(scaledBytes);
+        
         if (!mounted) return;
-        setState(() {
-          _markerIcons[key] = descriptor;
-        });
+        _markerIcons[key] = descriptor;
+        
+        print('✅ Loaded marker $key with size 120x120');
       } catch (e) {
-        // ignore and keep null to use default marker
+        print('❌ Failed to load marker $key: $e');
       }
     }
+
+    // Build markers once
+    final built = <Marker>{};
+    _locationData.forEach((key, value) {
+      final icon = _markerIcons[key];
+      built.add(Marker(
+        markerId: MarkerId(key),
+        position: value['position'] as LatLng,
+        icon: icon ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
+        anchor: const Offset(0.5, 1.0),
+        zIndex: 1,
+        onTap: () {
+          print('🎯 Marker tapped: $key');
+          _onMarkerTapped(key);
+        },
+      ));
+    });
+
+    if (!mounted) return;
+    setState(() {
+      _markers = built;
+      _markersLoaded = true;
+    });
   }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
-    rootBundle.loadString('assets/map_style_dark.json').then((style) {
-      // setMapStyle is deprecated; the current plugin suggests using
-      // the GoogleMap.style API. Keep the runtime behavior the same and
-      // silence the deprecation lint until a larger migration is done.
+    // Use light map style for V2
+    rootBundle.loadString('assets/map_style_light.json').then((style) {
       // ignore: deprecated_member_use
       mapController.setMapStyle(style);
     });
   }
 
-  void _selectLocation(String location) {
-    setState(() {
-      _selectedLocation = location;
-    });
-
-    mapController.animateCamera(
-      CameraUpdate.newLatLng(_locationData[location]!["position"]),
+  void _onMarkerTapped(String key) {
+    print('🎯 Processing marker tap for: $key');
+    
+    // Add blue circle around selected marker
+    final selectedCircle = Circle(
+      circleId: const CircleId('selected_marker_indicator'),
+      center: _locationData[key]!['position'] as LatLng,
+      radius: 40,
+      fillColor: const Color(0x4442A5F5),
+      strokeColor: const Color(0xFF42A5F5),
+      strokeWidth: 3,
+      zIndex: 0,
+      consumeTapEvents: false,
     );
-  }
-
-  Future<void> _onMarkerTapped(String key) async {
-    // compute screen coordinate for the tapped marker
-    final pos = _locationData[key]!['position'] as LatLng;
-    try {
-      final screenCoord = await mapController.getScreenCoordinate(pos);
-      // GoogleMapController.getScreenCoordinate returns ScreenCoordinate
-      // with x/y in device pixels. Convert to logical pixels for layout.
-      final devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
-      final dx = screenCoord.x / devicePixelRatio;
-      final dy = screenCoord.y / devicePixelRatio;
-
-      setState(() {
-        _showFigmaOverlay = true;
-        _overlayOffset = Offset(dx, dy);
-        _selectedLocation = key;
-      });
-    } catch (e) {
-      // Fallback: just center overlay on screen
-      setState(() {
-        _showFigmaOverlay = true;
-        _overlayOffset = Offset(MediaQuery.of(context).size.width / 2,
-            MediaQuery.of(context).size.height / 2);
-        _selectedLocation = key;
-      });
-    }
+    
+    setState(() {
+      _selectedLocation = key;
+      _showLocationCardV2 = true;
+      _markerBackgroundCircles = {selectedCircle};
+    });
+    
+    mapController.animateCamera(
+      CameraUpdate.newLatLng(_locationData[key]!['position'] as LatLng),
+    );
   }
 
   @override
@@ -144,38 +168,53 @@ class _LandingPageV2State extends State<LandingPageV2> {
         children: [
           GoogleMap(
             onMapCreated: _onMapCreated,
+            onTap: (LatLng position) {
+              print('🗺️ Map tapped at: ${position.latitude}, ${position.longitude}');
+            },
             initialCameraPosition: CameraPosition(
               target: selected["position"],
               zoom: 14.0,
             ),
-            markers: _locationData.entries.map((entry) {
-              final icon = _markerIcons[entry.key] ?? BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange);
-              return Marker(
-                markerId: MarkerId(entry.key),
-                position: entry.value["position"],
-                icon: icon,
-                anchor: Offset(0.5, 1.0), // centers it at the bottom of glow
-                onTap: () => _onMarkerTapped(entry.key),
-              );
-            }).toSet(),
+            markers: _markers,
+            circles: _markerBackgroundCircles,
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
             mapToolbarEnabled: false,
+            zoomGesturesEnabled: true,
+            scrollGesturesEnabled: true,
+            rotateGesturesEnabled: true,
+            tiltGesturesEnabled: true,
             padding: const EdgeInsets.only(bottom: 120),
           ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Theme.of(context).colorScheme.surface.withOpacitySafe(0.5),
-                  Colors.transparent,
-                  Colors.transparent,
-                  Theme.of(context).colorScheme.surface.withOpacitySafe(0.7),
-                ],
-                stops: const [0.0, 0.2, 0.7, 1.0],
+          if (!_markersLoaded)
+            const Positioned.fill(
+              child: ColoredBox(
+                color: Colors.black54,
+                child: Center(
+                  child: SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+              ),
+            ),
+          // Gradient overlay - must ignore touches so map is interactive!
+          IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Theme.of(context).colorScheme.surface.withOpacitySafe(0.5),
+                    Colors.transparent,
+                    Colors.transparent,
+                    Theme.of(context).colorScheme.surface.withOpacitySafe(0.7),
+                  ],
+                  stops: const [0.0, 0.2, 0.7, 1.0],
+                ),
               ),
             ),
           ),
@@ -194,112 +233,88 @@ class _LandingPageV2State extends State<LandingPageV2> {
               ],
             ),
           ),
-          const ScanToUnlockBanner(),
-          Positioned(
-            bottom: 270, // moved search bar slightly up
-            left: 16,
-            right: 16,
-            child: buildSearchBar(),
-          ),
-          Positioned(
-            bottom: 30,
-            left: 16,
-            right: 16,
-            child: _buildLocationCard(selected),
-          ),
-          // Figma landing overlay anchored to tapped marker
-          if (_showFigmaOverlay)
+          const ScanToUnlockBannerV2(),
+          if (_showLocationCardV2)
             Positioned(
-              left: _overlayOffset.dx - 196, // center by half svg width (393/2)
-              top: _overlayOffset.dy - 852, // position it above the marker
-              width: 393,
-              height: 852,
-              child: IgnorePointer(
-                ignoring: false,
-                child: SvgPicture.asset(
-                  'assets/figma/landing_frame_174_176.svg',
-                  fit: BoxFit.contain,
-                ),
-              ),
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _buildLocationCardV2(selected),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildLocationCard(Map<String, dynamic> location) {
+  Widget _buildLocationCardV2(Map<String, dynamic> location) {
     return Container(
+      height: MediaQuery.of(context).size.height * 0.2,
+      margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-  color: const Color(0xFF121212).withOpacitySafe(0.8),
+        color: const Color(0xFF1A1A1A).withOpacitySafe(0.95),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.surface.withOpacitySafe(0.3),
+            color: Colors.black.withOpacitySafe(0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Padding(
+      child: Stack(
+        children: [
+          Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withOpacitySafe(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        'Nearest Location',
-                        style: TextStyle(
-                          color: Colors.blue.withOpacitySafe(0.8),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      location["distance"],
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'COPA $_selectedLocation',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.location_on,
-                        size: 12, color: AppColors.textSecondary),
-                    const SizedBox(width: 4),
                     Expanded(
-                      child: Text(
-                        location["address"],
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'COPA $_selectedLocation',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on,
+                                  size: 12, color: Colors.white70),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  location["address"],
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white70),
+                      onPressed: () {
+                        setState(() {
+                          _showLocationCardV2 = false;
+                        });
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
@@ -314,93 +329,52 @@ class _LandingPageV2State extends State<LandingPageV2> {
                     const SizedBox(width: 6),
                     Text(
                       location["status"] == "occupied" ? "Occupied" : "Vacant",
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                     const Spacer(),
                     Text(
                       'Last cleaned: ${location["lastCleaned"]}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textMuted,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.white54,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: Icon(Icons.navigation,
-                            size: 16,
-                            color: Theme.of(context).colorScheme.onPrimary),
-                        label: const Text('Directions'),
-                        onPressed: () async {
-                          final lat = location["position"].latitude;
-                          final lng = location["position"].longitude;
-                          final url = Uri.parse(
-                              'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=walking');
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.navigation, size: 16),
+                  label: const Text('Get Directions'),
+                  onPressed: () async {
+                    final lat = location["position"].latitude;
+                    final lng = location["position"].longitude;
+                    final url = Uri.parse(
+                        'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=walking');
 
-                          // Capture messenger and mounted state before async gaps
-                          final messenger = ScaffoldMessenger.of(context);
-                          messenger.showSnackBar(const SnackBar(
-                              content: Text(
-                                  'Opening directions in Google Maps...')));
-
-                          await Future.delayed(const Duration(milliseconds: 500));
-                          if (!mounted) return;
-
-                          if (await canLaunchUrl(url)) {
-                            await launchUrl(url,
-                                mode: LaunchMode.externalApplication);
-                          } else {
-                            messenger.showSnackBar(const SnackBar(
-                                content:
-                                    Text("Could not launch Google Maps")));
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          foregroundColor:
-                              Theme.of(context).colorScheme.onPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url,
+                          mode: LaunchMode.externalApplication);
+                    } else {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text("Could not launch Google Maps")),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryBlue,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 40),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: Icon(Icons.info_outline,
-                            size: 16,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onPrimary
-                                .withOpacitySafe(0.7)),
-                        label: const Text('Details'),
-                        onPressed: () {},
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Theme.of(context)
-                              .colorScheme
-                              .onPrimary
-                              .withOpacitySafe(0.7),
-                          side: BorderSide(color: AppColors.divider),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
