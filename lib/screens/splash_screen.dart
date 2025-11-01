@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'landing_page.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -10,30 +9,33 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  bool _navigated = false;
-
-  void _goToHome() {
-    if (!_navigated) {
-      _navigated = true;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const LandingPage()),
-      );
-    }
+  @override
+  void initState() {
+    super.initState();
+    // Navigate to home after 3 seconds so COPA text is visible
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LandingPage()),
+        );
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
+    return const Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
-        child: Lottie.asset(
-          'assets/animations/door_open.json',
-          width: 200,
-          repeat: false,
-          onLoaded: (composition) {
-            Future.delayed(composition.duration, _goToHome);
-          },
+        child: Text(
+          'COPA',
+          style: TextStyle(
+            fontSize: 48,
+            fontWeight: FontWeight.bold,
+            color: Colors.red,
+            letterSpacing: 2,
+          ),
         ),
       ),
     );

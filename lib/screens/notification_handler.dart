@@ -81,7 +81,7 @@ class NotificationHandler {
     GlassModal.show(
       context: navigatorKey.currentContext!,
       icon: Icons.notifications_active,
-      iconColor: Colors.amber,
+      iconColor: const Color(0xFF0FB498), // Teal color matching V2 theme
       title: 'Notification',
       message: message,
       buttonText: 'Dismiss',

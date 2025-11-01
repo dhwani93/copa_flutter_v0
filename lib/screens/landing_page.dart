@@ -1,14 +1,17 @@
-import 'dart:ui';
+import 'dart:ui' as ui;
 import 'package:copa_v0/widgets/scan_to_unlock_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import '../utils/color_extensions.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../utils/color_extensions.dart';
 import '../widgets/app_bar_with_nav.dart';
 import '../widgets/map_widgets.dart';
-import '../theme/app_colors.dart';
 
+/// LandingPage
+///
+/// Main landing page with map functionality and modern V2 design.
+/// This replaces the original landing page with improved UI and better performance.
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
 
@@ -17,21 +20,22 @@ class LandingPage extends StatefulWidget {
 }
 
 class _LandingPageState extends State<LandingPage> {
-  late GoogleMapController mapController;
-  String _selectedLocation = "Main St";
+  GoogleMapController? mapController;
 
   final Map<String, Map<String, dynamic>> _locationData = {
     "Main St": {
       "position": const LatLng(37.7749, -122.4194),
       "address": "123 Main St, San Francisco, CA",
       "distance": "0.3 mi",
-      "status": "vacant",
+      "type": "women", // women or unisex
+      "status": "vacant", // vacant, occupied, or disabled
       "lastCleaned": "12 min ago"
     },
     "Market St": {
       "position": const LatLng(37.7790, -122.4174),
       "address": "456 Market St, San Francisco, CA",
       "distance": "0.7 mi",
+      "type": "women",
       "status": "occupied",
       "lastCleaned": "1 hr ago"
     },
@@ -39,36 +43,183 @@ class _LandingPageState extends State<LandingPage> {
       "position": const LatLng(37.7765, -122.4216),
       "address": "789 Powell St, San Francisco, CA",
       "distance": "1.2 mi",
+      "type": "unisex",
       "status": "vacant",
       "lastCleaned": "25 min ago"
     },
+    "Mission St": {
+      "position": const LatLng(37.7730, -122.4190),
+      "address": "321 Mission St, San Francisco, CA",
+      "distance": "0.5 mi",
+      "type": "women",
+      "status": "disabled",
+      "lastCleaned": "3 hr ago"
+    },
+    "Geary St": {
+      "position": const LatLng(37.7808, -122.4205),
+      "address": "555 Geary St, San Francisco, CA",
+      "distance": "0.8 mi",
+      "type": "unisex",
+      "status": "occupied",
+      "lastCleaned": "45 min ago"
+    },
   };
 
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
-    rootBundle.loadString('assets/map_style_dark.json').then((style) {
-      // setMapStyle is deprecated; the current plugin suggests using
-      // the GoogleMap.style API. Keep the runtime behavior the same and
-      // silence the deprecation lint until a larger migration is done.
-      // ignore: deprecated_member_use
-      mapController.setMapStyle(style);
+  final Map<String, BitmapDescriptor?> _markerIcons = {};
+  Set<Marker> _markers = {};
+  Set<Circle> _markerBackgroundCircles = {};
+  bool _showLocationCardV2 = false;
+  String? _selectedLocation;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMarkerIcons();
+  }
+
+  // Helper function to get marker color based on type and status
+  // 174_127: women occupied (red)
+  // 174_131: women vacant (teal)
+  // 174_135: women disabled (grey)
+  // 174_170: unisex vacant (teal)
+  // 174_171: unisex occupied (red)
+  // 174_172: unisex disabled (grey)
+  int _getMarkerPinNumber(String type, String status) {
+    if (type == "women") {
+      if (status == "occupied") {
+        return 127; // Women occupied (red)
+      } else if (status == "disabled") {
+        return 135; // Women disabled (grey)
+      } else { // vacant
+        return 131; // Women vacant (teal)
+      }
+    } else { // unisex
+      if (status == "occupied") {
+        return 171; // Unisex occupied (red)
+      } else if (status == "disabled") {
+        return 172; // Unisex disabled (grey)
+      } else { // vacant
+        return 170; // Unisex vacant (teal, two people icon)
+      }
+    }
+  }
+
+  // Helper function to get status badge color
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'vacant':
+        return const Color(0xFF0FB498); // Teal
+      case 'occupied':
+        return Colors.red;
+      case 'disabled':
+        return Colors.grey;
+      default:
+        return const Color(0xFF0FB498);
+    }
+  }  Future<void> _loadMarkerIcons() async {
+    // Load markers progressively - add each one as it's ready
+    for (var entry in _locationData.entries) {
+      final key = entry.key;
+      final type = entry.value['type'] as String;
+      final status = entry.value['status'] as String;
+      final pinNumber = _getMarkerPinNumber(type, status);
+      
+      final pngName = 'assets/figma/pins/resized/pin_174_${pinNumber}_48w.png';
+      try {
+        // Load PNG and scale it up to 120px for better visibility
+        final data = await rootBundle.load(pngName);
+        final bytes = data.buffer.asUint8List();
+        
+        final codec = await ui.instantiateImageCodec(
+          bytes,
+          targetWidth: 120,
+          targetHeight: 120,
+        );
+        final frame = await codec.getNextFrame();
+        final scaledImage = frame.image;
+        
+        final byteData = await scaledImage.toByteData(format: ui.ImageByteFormat.png);
+        final scaledBytes = byteData!.buffer.asUint8List();
+        
+        final descriptor = BitmapDescriptor.fromBytes(scaledBytes);
+        
+        if (!mounted) return;
+        _markerIcons[key] = descriptor;
+        
+        // Add marker immediately as it's ready
+        _addMarkerToMap(key, entry.value, descriptor);
+        
+        print('✅ Loaded marker $key ($type-$status) with pin $pinNumber at size 120x120');
+      } catch (e) {
+        print('❌ Failed to load marker $key: $e');
+      }
+    }
+  }
+
+  void _addMarkerToMap(String key, Map<String, dynamic> value, BitmapDescriptor icon) {
+    final marker = Marker(
+      markerId: MarkerId(key),
+      position: value['position'] as LatLng,
+      icon: icon,
+      anchor: const Offset(0.5, 1.0),
+      zIndex: 1,
+      onTap: () {
+        print('🎯 Marker tapped: $key');
+        _onMarkerTapped(key);
+      },
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _markers.add(marker);
     });
   }
 
-  void _selectLocation(String location) {
-    setState(() {
-      _selectedLocation = location;
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+    // Use light map style for V2
+    rootBundle.loadString('assets/map_style_light.json').then((style) {
+      // ignore: deprecated_member_use
+      mapController?.setMapStyle(style);
     });
+  }
 
-    mapController.animateCamera(
-      CameraUpdate.newLatLng(_locationData[location]!["position"]),
+  void _onMarkerTapped(String key) {
+    print('🎯 Processing marker tap for: $key');
+    
+    setState(() {
+      _selectedLocation = key;
+      _showLocationCardV2 = true;
+    });
+    
+    // Rebuild circles - add blue border circle for selected marker
+    final circles = <Circle>{};
+    _locationData.forEach((locKey, value) {
+      if (locKey == key) {
+        // Add blue border circle for selected marker
+        circles.add(Circle(
+          circleId: CircleId('${locKey}_border'),
+          center: value['position'] as LatLng,
+          radius: 25, // Slightly larger than marker for border effect
+          strokeColor: Colors.blue,
+          strokeWidth: 3,
+          fillColor: Colors.transparent,
+          zIndex: 2,
+        ));
+      }
+    });
+    
+    setState(() {
+      _markerBackgroundCircles = circles;
+    });
+    
+    mapController?.animateCamera(
+      CameraUpdate.newLatLng(_locationData[key]!['position'] as LatLng),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final selected = _locationData[_selectedLocation]!;
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       extendBody: true,
@@ -78,38 +229,48 @@ class _LandingPageState extends State<LandingPage> {
         children: [
           GoogleMap(
             onMapCreated: _onMapCreated,
+            onTap: (LatLng position) {
+              print('🗺️ Map tapped at: ${position.latitude}, ${position.longitude}');
+              // Close location card when tapping anywhere on the map
+              if (_showLocationCardV2) {
+                setState(() {
+                  _showLocationCardV2 = false;
+                  _selectedLocation = null;
+                  _markerBackgroundCircles = {};
+                });
+              }
+            },
             initialCameraPosition: CameraPosition(
-              target: selected["position"],
+              target: _locationData["Main St"]!["position"] as LatLng,
               zoom: 14.0,
             ),
-            markers: _locationData.entries.map((entry) {
-              return Marker(
-                markerId: MarkerId(entry.key),
-                position: entry.value["position"],
-                icon: BitmapDescriptor.defaultMarkerWithHue(
-                    BitmapDescriptor.hueOrange),
-                anchor: Offset(0.5, 1.0), // centers it at the bottom of glow
-                onTap: () => _selectLocation(entry.key),
-              );
-            }).toSet(),
+            markers: _markers,
+            circles: _markerBackgroundCircles,
             myLocationEnabled: true,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
             mapToolbarEnabled: false,
+            zoomGesturesEnabled: true,
+            scrollGesturesEnabled: true,
+            rotateGesturesEnabled: true,
+            tiltGesturesEnabled: true,
             padding: const EdgeInsets.only(bottom: 120),
           ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Theme.of(context).colorScheme.surface.withOpacitySafe(0.5),
-                  Colors.transparent,
-                  Colors.transparent,
-                  Theme.of(context).colorScheme.surface.withOpacitySafe(0.7),
-                ],
-                stops: const [0.0, 0.2, 0.7, 1.0],
+          // Gradient overlay - must ignore touches so map is interactive!
+          IgnorePointer(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Theme.of(context).colorScheme.surface.withOpacitySafe(0.5),
+                    Colors.transparent,
+                    Colors.transparent,
+                    Theme.of(context).colorScheme.surface.withOpacitySafe(0.7),
+                  ],
+                  stops: const [0.0, 0.2, 0.7, 1.0],
+                ),
               ),
             ),
           ),
@@ -119,199 +280,130 @@ class _LandingPageState extends State<LandingPage> {
             child: Column(
               children: [
                 buildMapControlButton(Icons.add, () {
-                  mapController.animateCamera(CameraUpdate.zoomIn());
+                  mapController?.animateCamera(CameraUpdate.zoomIn());
                 }),
                 const SizedBox(height: 8),
                 buildMapControlButton(Icons.remove, () {
-                  mapController.animateCamera(CameraUpdate.zoomOut());
+                  mapController?.animateCamera(CameraUpdate.zoomOut());
                 }),
               ],
             ),
           ),
           const ScanToUnlockBanner(),
-          Positioned(
-            bottom: 270, // moved search bar slightly up
-            left: 16,
-            right: 16,
-            child: buildSearchBar(),
-          ),
-          Positioned(
-            bottom: 30,
-            left: 16,
-            right: 16,
-            child: _buildLocationCard(selected),
-          ),
+          if (_showLocationCardV2 && _selectedLocation != null)
+            Positioned(
+              bottom: 360, // Position much higher, just below the marker
+              left: 16,
+              right: 16,
+              child: _buildLocationCardV2(_selectedLocation!),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildLocationCard(Map<String, dynamic> location) {
+  Widget _buildLocationCardV2(String locationKey) {
+    final location = _locationData[locationKey];
+    if (location == null) return const SizedBox.shrink();
+
     return Container(
       decoration: BoxDecoration(
-  color: const Color(0xFF121212).withOpacitySafe(0.8),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.surface.withOpacitySafe(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          // Left side - Location details
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
+                Text(
+                  locationKey,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  location['address'] as String? ?? '',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Type badge (Women/Unisex)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacitySafe(0.2),
-                        borderRadius: BorderRadius.circular(12),
+                        color: const Color(0xFF0FB498).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            (location['type'] as String) == 'women' 
+                              ? Icons.woman 
+                              : Icons.people,
+                            size: 14,
+                            color: const Color(0xFF0FB498),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            ((location['type'] as String?) ?? 'women').toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF0FB498),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Status badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(location['status'] as String? ?? 'vacant').withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        'Nearest Location',
+                        (location['status'] as String? ?? 'vacant').toUpperCase(),
                         style: TextStyle(
-                          color: Colors.blue.withOpacitySafe(0.8),
                           fontSize: 12,
+                          color: _getStatusColor(location['status'] as String? ?? 'vacant'),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Text(
-                      location["distance"],
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'COPA $_selectedLocation',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.location_on,
-                        size: 12, color: AppColors.textSecondary),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        location["address"],
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(Icons.circle,
-                        size: 10,
-                        color: location["status"] == "occupied"
-                            ? AppColors.errorRed
-                            : AppColors.successGreen),
-                    const SizedBox(width: 6),
-                    Text(
-                      location["status"] == "occupied" ? "Occupied" : "Vacant",
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    const Spacer(),
-                    Text(
-                      'Last cleaned: ${location["lastCleaned"]}',
+                      location['lastCleaned'] as String? ?? '',
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        icon: Icon(Icons.navigation,
-                            size: 16,
-                            color: Theme.of(context).colorScheme.onPrimary),
-                        label: const Text('Directions'),
-                        onPressed: () async {
-                          final lat = location["position"].latitude;
-                          final lng = location["position"].longitude;
-                          final url = Uri.parse(
-                              'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=walking');
-
-                          // Capture messenger and mounted state before async gaps
-                          final messenger = ScaffoldMessenger.of(context);
-                          messenger.showSnackBar(const SnackBar(
-                              content: Text(
-                                  'Opening directions in Google Maps...')));
-
-                          await Future.delayed(const Duration(milliseconds: 500));
-                          if (!mounted) return;
-
-                          if (await canLaunchUrl(url)) {
-                            await launchUrl(url,
-                                mode: LaunchMode.externalApplication);
-                          } else {
-                            messenger.showSnackBar(const SnackBar(
-                                content:
-                                    Text("Could not launch Google Maps")));
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          foregroundColor:
-                              Theme.of(context).colorScheme.onPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        icon: Icon(Icons.info_outline,
-                            size: 16,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onPrimary
-                                .withOpacitySafe(0.7)),
-                        label: const Text('Details'),
-                        onPressed: () {},
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Theme.of(context)
-                              .colorScheme
-                              .onPrimary
-                              .withOpacitySafe(0.7),
-                          side: BorderSide(color: AppColors.divider),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
+                        color: Colors.grey[500],
                       ),
                     ),
                   ],
@@ -319,7 +411,34 @@ class _LandingPageState extends State<LandingPage> {
               ],
             ),
           ),
-        ),
+          const SizedBox(width: 16),
+          // Right side - Directions button
+          GestureDetector(
+            onTap: () async {
+              print('📍 Opening directions to: $locationKey');
+              final lat = (location['position'] as LatLng).latitude;
+              final lng = (location['position'] as LatLng).longitude;
+              final url = Uri.parse(
+                  'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=walking');
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.directions,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

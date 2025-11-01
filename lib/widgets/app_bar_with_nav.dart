@@ -1,28 +1,39 @@
 import 'package:flutter/material.dart';
-import '../utils/color_extensions.dart';
 
+/// AppBar for LandingPage
+/// Uses glassy translucent teal with white text and icons
 PreferredSizeWidget buildAppBar(BuildContext context) {
   return AppBar(
     centerTitle: true,
     title: const Text(
       "COPA",
       style: TextStyle(
+        color: Colors.white, // White text
+        fontWeight: FontWeight.bold,
         shadows: [
           Shadow(
             blurRadius: 3.0,
-            color: Color.fromARGB(66, 67, 62, 62),
+            color: Color.fromARGB(80, 0, 0, 0),
             offset: Offset(1.5, 1.5),
           ),
         ],
       ),
     ),
-  backgroundColor: Colors.black.withOpacitySafe(0.5),
+    backgroundColor: const Color(0xFF0FB498).withOpacity(0.7), // Glassy translucent teal
     elevation: 0,
+    iconTheme: const IconThemeData(color: Colors.white), // White back arrow and icons
     actions: [
       GestureDetector(
         onTap: () {
           showModalBottomSheet(
             context: context,
+            backgroundColor: Colors.white,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
             builder: (context) {
               return Container(
                 padding: const EdgeInsets.all(20),
@@ -30,24 +41,32 @@ PreferredSizeWidget buildAppBar(BuildContext context) {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.person),
+                      leading: const Icon(Icons.person, color: Colors.black),
                       title: const Text('Profile'),
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
                     ),
                     ListTile(
-                      leading: const Icon(Icons.payment),
+                      leading: const Icon(Icons.payment, color: Colors.black),
                       title: const Text('Payment Details'),
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
                     ),
                     ListTile(
-                      leading: const Icon(Icons.history),
+                      leading: const Icon(Icons.history, color: Colors.black),
                       title: const Text('History'),
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
                     ),
                     ListTile(
-                      leading: const Icon(Icons.logout),
+                      leading: const Icon(Icons.logout, color: Colors.black),
                       title: const Text('Logout'),
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
                     ),
                   ],
                 ),
@@ -56,10 +75,14 @@ PreferredSizeWidget buildAppBar(BuildContext context) {
           );
         },
         child: Container(
-          margin: EdgeInsets.only(right: 15),
+          margin: const EdgeInsets.only(right: 15),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            boxShadow: [
+            border: Border.all(
+              color: Colors.white, // White border
+              width: 2,
+            ),
+            boxShadow: const [
               BoxShadow(
                 color: Colors.black26,
                 blurRadius: 5,
@@ -67,7 +90,7 @@ PreferredSizeWidget buildAppBar(BuildContext context) {
               ),
             ],
           ),
-          child: CircleAvatar(
+          child: const CircleAvatar(
             radius: 20,
             backgroundImage: AssetImage('assets/rahul_profile.jpeg'),
           ),

@@ -344,7 +344,12 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const UnlockSuccessScreen()),
+      MaterialPageRoute(
+        builder: (_) => const UnlockSuccessScreen(
+          locationName: 'Main St COPA',
+          lastCleaned: '10 min ago',
+        ),
+      ),
     );
   }
 
@@ -357,7 +362,7 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => UnlockErrorScreen(message)),
+      MaterialPageRoute(builder: (_) => UnlockErrorScreen(errorMessage: message)),
     );
   }
 
@@ -387,7 +392,6 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
       backgroundColor: const Color(0xFF101014),
       body: Stack(
         children: [
-          const CopaFactBanner(),
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -419,6 +423,14 @@ class _BLEUnlockScreenState extends State<BLEUnlockScreen> {
                 ),
               ],
             ),
+          ),
+          
+          // Copa fact banner at bottom with ghostie smiley (same position as QR scanner V2)
+          const Positioned(
+            bottom: 60,
+            left: 0,
+            right: 0,
+            child: CopaFactBanner(),
           ),
         ],
       ),

@@ -1,4 +1,3 @@
-import 'package:copa_v0/widgets/copa_fact_banner.dart';
 import 'package:flutter/material.dart';
 import '../utils/color_extensions.dart';
 import 'package:flutter/services.dart';
@@ -6,7 +5,10 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'ble_unlock_screen.dart';
 import '/widgets/app_bar_with_nav.dart';
+import '/widgets/copa_fact_banner.dart';
 
+/// QRScannerScreen
+/// Modern QR scanner screen using teal color scheme
 class QRScannerScreen extends StatefulWidget {
   const QRScannerScreen({super.key});
 
@@ -44,7 +46,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
     final String? code = barcodeCapture.barcodes.first.rawValue;
     if (code != null) {
       HapticFeedback.mediumImpact();
-      debugPrint("✅ QR Code Scanned: \$code");
+      debugPrint("✅ QR Code Scanned: $code");
       await scannerController.stop();
       _scanLineController.stop();
       setState(() {
@@ -84,23 +86,43 @@ class _QRScannerScreenState extends State<QRScannerScreen>
             ),
           ),
 
-          const CopaFactBanner(),
-
-          // Scanner box with camera or QR code
+          // Content
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              const Spacer(flex: 1),
+              
+              // Price badge at top
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Text(
+                  '₹10',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 30),
+
+              // Scanner box with camera or QR code
               Stack(
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
-                      width: 240,
-                      height: 240,
+                      width: 280,
+                      height: 280,
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: Colors.blueAccent.withOpacitySafe(0.4),
-                          width: 3,
+                          color: Colors.grey.withOpacitySafe(0.3),
+                          width: 2,
                         ),
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -112,7 +134,7 @@ class _QRScannerScreenState extends State<QRScannerScreen>
                           : QrImageView(
                               data: scannedCode!,
                               version: QrVersions.auto,
-                              size: 220,
+                              size: 260,
                               backgroundColor: Colors.white,
                             ),
                     ),
@@ -133,9 +155,9 @@ class _QRScannerScreenState extends State<QRScannerScreen>
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    Colors.blueAccent.withOpacitySafe(0.2),
-                                    Colors.blueAccent.withOpacitySafe(0.6),
-                                    Colors.blueAccent.withOpacitySafe(0.2),
+                                    Colors.white.withOpacitySafe(0.2),
+                                    Colors.white.withOpacitySafe(0.8),
+                                    Colors.white.withOpacitySafe(0.2),
                                   ],
                                 ),
                               ),
@@ -146,66 +168,71 @@ class _QRScannerScreenState extends State<QRScannerScreen>
                     ),
                 ],
               ),
+              
               const SizedBox(height: 20),
-            ],
-          ),
-
-          // Unlock button and rescan
-          Positioned(
-            bottom: 60,
-            child: Column(
-              children: [
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.lock_open, color: Colors.white),
-                  label: const Text('Unlock Now'),
-                  onPressed: scannedCode != null
-                      ? () {
-                          HapticFeedback.mediumImpact(); // Haptic on unlock
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  BLEUnlockScreen(scannedCode!),
-                            ),
-                          );
-                        }
-                      : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: scannedCode != null
-                        ? Colors.blue[600]
-                        : Colors.grey[800],
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 40,
-                    ),
-                    elevation: 8,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+              
+              // Scan to unlock button just under camera
+              ElevatedButton.icon(
+                icon: const Icon(Icons.lock_open, color: Colors.white),
+                label: const Text('Unlock Now'),
+                onPressed: scannedCode != null
+                    ? () {
+                        HapticFeedback.mediumImpact();
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => BLEUnlockScreen(scannedCode!),
+                          ),
+                        );
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: scannedCode != null
+                      ? const Color(0xFF0FB498)
+                      : Colors.grey[800],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 40,
+                  ),
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 12),
+              
+              if (scannedCode != null)
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      scannedCode = null;
+                      isScanning = false;
+                      scannerController.start();
+                      _scanLineController.repeat(reverse: true);
+                    });
+                  },
+                  child: const Text(
+                    'Scan Again',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      decoration: TextDecoration.underline,
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                if (scannedCode != null)
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        scannedCode = null;
-                        isScanning = false;
-                        scannerController.start();
-                        _scanLineController.repeat(reverse: true);
-                      });
-                    },
-                    child: const Text(
-                      'Scan Again',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+              
+              const Spacer(flex: 2),
+            ],
+          ),
+
+          // Copa fact banner at bottom with ghostie smiley
+          const Positioned(
+            bottom: 60, // Higher from the bottom
+            left: 0,
+            right: 0,
+            child: CopaFactBanner(),
           ),
         ],
       ),
