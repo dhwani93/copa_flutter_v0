@@ -4,7 +4,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'screens/notification_handler.dart';
 import 'screens/landing_page.dart';
 import 'screens/qr_scanner_screen.dart';
-import 'screens/splash_screen.dart';
 import 'theme/app_theme.dart';
 
 void main() {

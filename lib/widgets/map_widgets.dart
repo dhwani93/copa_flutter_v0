@@ -7,7 +7,7 @@ Widget buildMapControlButton(IconData icon, VoidCallback onPressed) {
     width: 36,
     height: 36,
     decoration: BoxDecoration(
-  color: const Color.fromARGB(255, 38, 37, 37)!.withOpacitySafe(0.7),
+  color: const Color.fromARGB(255, 38, 37, 37).withOpacitySafe(0.7),
       shape: BoxShape.circle,
       border: Border.all(color: Colors.grey[800]!),
       boxShadow: [

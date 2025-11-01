@@ -292,7 +292,7 @@ class _LandingPageState extends State<LandingPage> {
           const ScanToUnlockBanner(),
           if (_showLocationCardV2 && _selectedLocation != null)
             Positioned(
-              bottom: 360, // Position much higher, just below the marker
+              top: MediaQuery.of(context).size.height * 0.45, // Position in middle area of screen
               left: 16,
               right: 16,
               child: _buildLocationCardV2(_selectedLocation!),
@@ -319,126 +319,133 @@ class _LandingPageState extends State<LandingPage> {
         ],
       ),
       padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          // Left side - Location details
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  locationKey,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  location['address'] as String? ?? '',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    // Type badge (Women/Unisex)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0FB498).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            (location['type'] as String) == 'women' 
-                              ? Icons.woman 
-                              : Icons.people,
-                            size: 14,
-                            color: const Color(0xFF0FB498),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            ((location['type'] as String?) ?? 'women').toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF0FB498),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            // Left side - Location details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    locationKey,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
-                    const SizedBox(width: 8),
-                    // Status badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _getStatusColor(location['status'] as String? ?? 'vacant').withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        (location['status'] as String? ?? 'vacant').toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: _getStatusColor(location['status'] as String? ?? 'vacant'),
-                          fontWeight: FontWeight.w500,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    location['address'] as String? ?? '',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      // Type badge (Women/Unisex)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0FB498).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              (location['type'] as String) == 'women' 
+                                ? Icons.woman 
+                                : Icons.people,
+                              size: 14,
+                              color: const Color(0xFF0FB498),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              ((location['type'] as String?) ?? 'women').toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF0FB498),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      location['lastCleaned'] as String? ?? '',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[500],
+                      // Status badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(location['status'] as String? ?? 'vacant').withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          (location['status'] as String? ?? 'vacant').toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _getStatusColor(location['status'] as String? ?? 'vacant'),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    location['lastCleaned'] as String? ?? '',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
                     ),
-                  ],
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Right side - Directions button
+            GestureDetector(
+              onTap: () async {
+                print('📍 Opening directions to: $locationKey');
+                final lat = (location['position'] as LatLng).latitude;
+                final lng = (location['position'] as LatLng).longitude;
+                final url = Uri.parse(
+                    'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=walking');
+                if (await canLaunchUrl(url)) {
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
+                }
+              },
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          // Right side - Directions button
-          GestureDetector(
-            onTap: () async {
-              print('📍 Opening directions to: $locationKey');
-              final lat = (location['position'] as LatLng).latitude;
-              final lng = (location['position'] as LatLng).longitude;
-              final url = Uri.parse(
-                  'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=walking');
-              if (await canLaunchUrl(url)) {
-                await launchUrl(url, mode: LaunchMode.externalApplication);
-              }
-            },
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.directions,
-                color: Colors.white,
-                size: 28,
+                child: const Icon(
+                  Icons.directions,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

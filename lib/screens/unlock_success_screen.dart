@@ -56,110 +56,119 @@ class _UnlockSuccessScreenState extends State<UnlockSuccessScreen> {
       backgroundColor: Colors.white,
       appBar: buildAppBar(context),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 40),
-              
-              // Smiley face icon
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Center(
-                  child: Text(
-                    '😊',
-                    style: TextStyle(fontSize: 48),
-                  ),
-                ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height - 
+                          MediaQuery.of(context).padding.top - 
+                          kToolbarHeight - 48,
               ),
-              
-              const SizedBox(height: 32),
-              
-              // Question text
-              const Text(
-                'How would you say\nthe cleanliness of the\nrestroom is?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                  height: 1.3,
-                ),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Last cleaned info
-              Text(
-                'Last cleaned ${widget.lastCleaned}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-              
-              const SizedBox(height: 40),
-              
-              // Rating options
-              _buildRatingOption(
-                label: 'Clean',
-                emoji: '😊',
-                value: 'clean',
-                color: const Color(0xFF0FB498),
-              ),
-              
-              const SizedBox(height: 16),
-              
-              _buildRatingOption(
-                label: 'Okay',
-                emoji: '😐',
-                value: 'okay',
-                color: Colors.grey[300]!,
-              ),
-              
-              const SizedBox(height: 16),
-              
-              _buildRatingOption(
-                label: 'Needs cleaning',
-                emoji: '☹️',
-                value: 'needs_cleaning',
-                color: Colors.grey[300]!,
-              ),
-              
-              const Spacer(),
-              
-              // Submit button (only visible when option is selected)
-              if (_selectedRating != null)
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _submitFeedback,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0FB498),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      elevation: 0,
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  
+                  // Smiley face icon
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      'Submit Feedback',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                    child: const Center(
+                      child: Text(
+                        '😊',
+                        style: TextStyle(fontSize: 48),
                       ),
                     ),
                   ),
-                ),
-              
-              const SizedBox(height: 16),
-            ],
+                  
+                  const SizedBox(height: 32),
+                  
+                  // Question text
+                  const Text(
+                    'How would you say\nthe cleanliness of the\nrestroom is?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                      height: 1.3,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Last cleaned info
+                  Text(
+                    'Last cleaned ${widget.lastCleaned}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Rating options
+                  _buildRatingOption(
+                    label: 'Clean',
+                    emoji: '😊',
+                    value: 'clean',
+                    color: const Color(0xFF0FB498),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  _buildRatingOption(
+                    label: 'Okay',
+                    emoji: '😐',
+                    value: 'okay',
+                    color: Colors.grey[300]!,
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  _buildRatingOption(
+                    label: 'Needs cleaning',
+                    emoji: '☹️',
+                    value: 'needs_cleaning',
+                    color: Colors.grey[300]!,
+                  ),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Submit button (only visible when option is selected)
+                  if (_selectedRating != null)
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _submitFeedback,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0FB498),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Submit Feedback',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
           ),
         ),
       ),
