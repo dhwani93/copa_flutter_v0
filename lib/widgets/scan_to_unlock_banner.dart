@@ -48,44 +48,33 @@ class _ScanToUnlockBannerState extends State<ScanToUnlockBanner> {
         decoration: const BoxDecoration(
           color: Color(0xFF0FB498), // Teal/green background
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(90),
-            topRight: Radius.circular(90),
+            topLeft: Radius.circular(28),
+            topRight: Radius.circular(28),
           ),
         ),
         child: SafeArea(
           top: false,
           child: Padding(
             padding: const EdgeInsets.only(
-              top: 32,
-              right: 40,
-              bottom: 32,
-              left: 40,
+              top: 20,
+              right: 24,
+              bottom: 20,
+              left: 24,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle indicator at the top
-                Container(
-                  width: 80,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                
-                // Greeting text
+                // Greeting text (reduced size)
                 const Text(
                   'Hello, Rahul!',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 28,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 
                 // Find a COPA search field
                 Container(
@@ -128,7 +117,7 @@ class _ScanToUnlockBannerState extends State<ScanToUnlockBanner> {
                   ),
                 ),
                 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 
                 // Scan to unlock button
                 SizedBox(
@@ -138,7 +127,7 @@ class _ScanToUnlockBannerState extends State<ScanToUnlockBanner> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1A1A1A),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(28),
                       ),
@@ -148,21 +137,21 @@ class _ScanToUnlockBannerState extends State<ScanToUnlockBanner> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(3),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.white, width: 2),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Icon(
                             Icons.qr_code_scanner,
-                            size: 20,
+                            size: 18,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         const Text(
                           'Scan to unlock',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
